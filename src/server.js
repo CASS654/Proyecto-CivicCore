@@ -22,6 +22,13 @@ function getLocalIpAddresses() {
 
 // Iniciar la escucha en el puerto y host configurados
 const server = app.listen(config.port, config.host, () => {
+  const isCloudOrProd = process.env.RENDER || config.env === 'production';
+
+  if (isCloudOrProd) {
+    console.log(`[✓] CivicCore activo en puerto ${config.port} | Modo: ${config.env} | Node: ${process.version}`);
+    return;
+  }
+
   const localIps = getLocalIpAddresses();
 
   console.log('\n' + '='.repeat(62));
@@ -42,10 +49,6 @@ const server = app.listen(config.port, config.host, () => {
       console.log(`     > http://${address}:${config.port} (${iface})`);
     });
   }
-
-  console.log('\n ☁️  Acceso desde Internet (Vía Cloudflare Tunnel):');
-  console.log(`     Abre otra terminal o ejecuta: iniciar-tunel.bat`);
-  console.log(`     Comando: cloudflared tunnel --url http://localhost:${config.port}`);
   console.log('='.repeat(62) + '\n');
 });
 
