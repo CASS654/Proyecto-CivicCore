@@ -1,6 +1,11 @@
 /* ==========================================================================
-   CivicCore Design Enhancements & Animations
+   CivicCore Design Enhancements, Animations & Mobile Responsive System
    ========================================================================== */
+
+html, body {
+  overflow-x: hidden;
+  -webkit-tap-highlight-color: transparent;
+}
 
 /* Animación de apertura suave para modales */
 @keyframes scaleUp {
@@ -18,13 +23,14 @@
   animation: scaleUp 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-/* Ocultar scrollbars cuando se indica */
+/* Ocultar scrollbars cuando se indica pero permitir desplazamiento táctil */
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }
 .no-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* Pin del mapa con onda expansiva */
@@ -85,4 +91,27 @@
 input:focus, select:focus, textarea:focus {
   outline: none;
   box-shadow: 0 0 0 3px rgba(0, 40, 142, 0.15);
+}
+
+/* ==========================================================================
+   Optimizaciones Responsivas para Teléfonos Móviles (< 640px)
+   ========================================================================== */
+@media (max-width: 640px) {
+  /* Evita el auto-zoom forzado de iOS Safari y Chrome Android al tocar inputs */
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="number"],
+  input[type="search"],
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+
+  /* Mejorar área táctil de pines del mapa en pantallas táctiles */
+  .map-pin::after {
+    content: '';
+    position: absolute;
+    inset: -8px;
+  }
 }

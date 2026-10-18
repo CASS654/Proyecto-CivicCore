@@ -481,68 +481,76 @@
     let mobileHtml = '';
     if (role === 'invitado') {
       mobileHtml = `
-        <button data-target="view-nuevo" class="mobile-nav-btn active flex flex-col items-center justify-center min-w-[56px] text-primary font-bold">
-          <span class="material-symbols-outlined text-[24px]">add_circle</span>
+        <button data-target="view-nuevo" class="mobile-nav-btn active flex-1 py-1 flex flex-col items-center justify-center text-primary font-bold">
+          <span class="material-symbols-outlined text-[22px]">add_circle</span>
           <span class="text-[10px] mt-0.5">Reportar</span>
         </button>
-        <button onclick="window.civicApp.openAuthModal()" class="mobile-nav-btn flex flex-col items-center justify-center min-w-[56px] text-on-surface-variant">
-          <span class="material-symbols-outlined text-[24px]">login</span>
+        <button onclick="window.civicApp.openAuthModal()" class="mobile-nav-btn flex-1 py-1 flex flex-col items-center justify-center text-on-surface-variant">
+          <span class="material-symbols-outlined text-[22px]">login</span>
           <span class="text-[10px] mt-0.5">Acceder</span>
         </button>
       `;
     } else if (role === 'vecino') {
       mobileHtml = `
-        <button data-target="view-vecino" class="mobile-nav-btn active flex flex-col items-center justify-center min-w-[56px] text-primary font-bold">
-          <span class="material-symbols-outlined text-[24px]">cottage</span>
+        <button data-target="view-vecino" class="mobile-nav-btn active flex-1 py-1 flex flex-col items-center justify-center text-primary font-bold">
+          <span class="material-symbols-outlined text-[22px]">cottage</span>
           <span class="text-[10px] mt-0.5">Vecinal</span>
         </button>
-        <div class="relative -top-4">
+        <div class="relative -top-3.5 px-2">
           <button onclick="window.civicApp.switchView('view-nuevo')" class="w-12 h-12 rounded-full bg-primary text-on-primary flex items-center justify-center shadow-lg shadow-primary/30 active:scale-95 transition-all">
             <span class="material-symbols-outlined text-[26px]">add</span>
           </button>
         </div>
-        <button onclick="window.civicApp.logout()" class="mobile-nav-btn flex flex-col items-center justify-center min-w-[56px] text-on-surface-variant">
-          <span class="material-symbols-outlined text-[24px]">logout</span>
-          <span class="text-[10px] mt-0.5">Salir</span>
+        <button onclick="window.civicApp.openChangeMyPasswordModal()" class="mobile-nav-btn flex-1 py-1 flex flex-col items-center justify-center text-on-surface-variant">
+          <span class="material-symbols-outlined text-[22px]">key</span>
+          <span class="text-[10px] mt-0.5">Mi Clave</span>
         </button>
       `;
     } else if (role === 'trabajador') {
       mobileHtml = `
-        <button data-target="view-incidencias" class="mobile-nav-btn active flex flex-col items-center justify-center min-w-[56px] text-primary font-bold">
+        <button data-target="view-incidencias" class="mobile-nav-btn active flex-1 py-1 flex flex-col items-center justify-center text-primary font-bold">
           <span class="material-symbols-outlined text-[22px]">assignment</span>
           <span class="text-[10px] mt-0.5">Bandeja</span>
         </button>
-        <button data-target="view-mapa" class="mobile-nav-btn flex flex-col items-center justify-center min-w-[56px] text-on-surface-variant">
+        <button data-target="view-mapa" class="mobile-nav-btn flex-1 py-1 flex flex-col items-center justify-center text-on-surface-variant">
           <span class="material-symbols-outlined text-[22px]">map</span>
           <span class="text-[10px] mt-0.5">Mapa</span>
         </button>
-        <div class="relative -top-4">
+        <div class="relative -top-3.5 px-1">
           <button onclick="window.civicApp.switchView('view-nuevo')" class="w-12 h-12 rounded-full bg-primary text-on-primary flex items-center justify-center shadow-lg shadow-primary/30 active:scale-95 transition-all">
             <span class="material-symbols-outlined text-[26px]">add</span>
           </button>
         </div>
-        <button data-target="view-panel" class="mobile-nav-btn flex flex-col items-center justify-center min-w-[56px] text-on-surface-variant">
+        <button data-target="view-panel" class="mobile-nav-btn flex-1 py-1 flex flex-col items-center justify-center text-on-surface-variant">
           <span class="material-symbols-outlined text-[22px]">dashboard</span>
           <span class="text-[10px] mt-0.5">KPIs</span>
+        </button>
+        <button onclick="window.civicApp.openChangeMyPasswordModal()" class="mobile-nav-btn flex-1 py-1 flex flex-col items-center justify-center text-on-surface-variant">
+          <span class="material-symbols-outlined text-[22px]">key</span>
+          <span class="text-[10px] mt-0.5">Clave</span>
         </button>
       `;
     } else if (role === 'admin') {
       mobileHtml = `
-        <button data-target="view-admin-hub" class="mobile-nav-btn active flex flex-col items-center justify-center min-w-[56px] text-primary font-bold">
-          <span class="material-symbols-outlined text-[22px]">shield_person</span>
+        <button data-target="view-admin-hub" class="mobile-nav-btn active flex-1 py-1 flex flex-col items-center justify-center text-primary font-bold">
+          <span class="material-symbols-outlined text-[21px]">shield_person</span>
           <span class="text-[10px] mt-0.5">Hub</span>
         </button>
-        <button data-target="view-admin-users" class="mobile-nav-btn flex flex-col items-center justify-center min-w-[56px] text-on-surface-variant">
-          <span class="material-symbols-outlined text-[22px]">vpn_key</span>
+        <button data-target="view-admin-users" class="mobile-nav-btn flex-1 py-1 flex flex-col items-center justify-center text-on-surface-variant">
+          <span class="material-symbols-outlined text-[21px]">vpn_key</span>
           <span class="text-[10px] mt-0.5">Claves</span>
         </button>
-        <button data-target="view-admin-moderation" class="mobile-nav-btn flex flex-col items-center justify-center min-w-[56px] text-on-surface-variant">
-          <span class="material-symbols-outlined text-[22px]">edit_note</span>
+        <button data-target="view-admin-moderation" class="mobile-nav-btn flex-1 py-1 flex flex-col items-center justify-center text-on-surface-variant">
+          <span class="material-symbols-outlined text-[21px]">edit_note</span>
           <span class="text-[10px] mt-0.5">Moderar</span>
         </button>
-        <button data-target="view-admin-audit" class="mobile-nav-btn flex flex-col items-center justify-center min-w-[56px] text-on-surface-variant">
-          <span class="material-symbols-outlined text-[22px]">history_edu</span>
+        <button data-target="view-admin-audit" class="mobile-nav-btn flex-1 py-1 flex flex-col items-center justify-center text-on-surface-variant">
+          <span class="material-symbols-outlined text-[21px]">history_edu</span>
           <span class="text-[10px] mt-0.5">Auditoría</span>
+        </button>
+        <button data-target="view-incidencias" class="mobile-nav-btn flex-1 py-1 flex flex-col items-center justify-center text-on-surface-variant">
+          <span class="material-symbols-outlined text-[21px]">assignment</span>
+          <span class="text-[10px] mt-0.5">Bandeja</span>
         </button>
       `;
     }
@@ -561,7 +569,7 @@
     if (dom.userDisplayName) dom.userDisplayName.textContent = state.currentUser.name;
     if (dom.userDisplayRole) {
       dom.userDisplayRole.textContent = state.currentUser.role;
-      dom.userDisplayRole.className = `px-1.5 py-0.2 rounded-full font-bold uppercase text-[9px] ${roleConfig.badgeClass}`;
+      dom.userDisplayRole.className = `hidden sm:inline-block px-1.5 py-0.5 rounded-full font-bold uppercase text-[9px] ${roleConfig.badgeClass}`;
     }
     if (dom.sidebarUserName) dom.sidebarUserName.textContent = state.currentUser.name;
     if (dom.sidebarUserRole) dom.sidebarUserRole.textContent = `${roleConfig.label}`;
@@ -647,7 +655,7 @@
 
     if (filtered.length === 0) {
       container.innerHTML = `
-        <div class="col-span-full bg-surface-container-lowest rounded-2xl p-12 text-center border border-outline-variant/20 shadow-sm">
+        <div class="col-span-full bg-surface-container-lowest rounded-2xl p-8 sm:p-12 text-center border border-outline-variant/20 shadow-sm">
           <span class="material-symbols-outlined text-5xl text-outline mb-3">search_off</span>
           <h3 class="text-base font-bold text-on-surface">No se encontraron reportes con los filtros seleccionados</h3>
           <p class="text-xs text-outline mt-1 max-w-sm mx-auto">Prueba cambiando el estado operativo o la categoría.</p>
@@ -658,32 +666,32 @@
 
     // Badges de Estado
     const statusBadges = {
-      new: '<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-primary-fixed text-primary text-[11px] font-bold"><span class="w-1.5 h-1.5 rounded-full bg-primary animate-ping"></span>Nueva</span>',
-      progress: '<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-secondary-fixed text-secondary text-[11px] font-bold"><span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>En Terreno</span>',
-      resolved: '<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-tertiary-fixed text-tertiary text-[11px] font-bold"><span class="material-symbols-outlined text-[13px]">check</span>Resuelta</span>'
+      new: '<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-primary-fixed text-primary text-[11px] font-bold shrink-0"><span class="w-1.5 h-1.5 rounded-full bg-primary animate-ping"></span>Nueva</span>',
+      progress: '<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-secondary-fixed text-secondary text-[11px] font-bold shrink-0"><span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>En Terreno</span>',
+      resolved: '<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-tertiary-fixed text-tertiary text-[11px] font-bold shrink-0"><span class="material-symbols-outlined text-[13px]">check</span>Resuelta</span>'
     };
 
     // Badges de Prioridad (Funcionario > Vecino > Invitado)
     function getPriorityBadge(level, label) {
       if (level >= 4) {
-        return `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-red-600 text-white text-[10px] font-extrabold uppercase tracking-wide shadow-sm"><span class="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span>P4 • Crítica (Admin)</span>`;
+        return `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-red-600 text-white text-[10px] font-extrabold uppercase tracking-wide shadow-sm"><span class="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span>P4 • Crítica</span>`;
       }
       if (level === 3) {
-        return `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-600 text-white text-[10px] font-bold uppercase tracking-wide"><span class="material-symbols-outlined text-[11px]">bolt</span>P3 • Muy Alta (Funcionario)</span>`;
+        return `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-600 text-white text-[10px] font-bold uppercase tracking-wide"><span class="material-symbols-outlined text-[11px]">bolt</span>P3 • Muy Alta</span>`;
       }
       if (level === 2) {
         return `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-600 text-white text-[10px] font-bold uppercase tracking-wide"><span class="material-symbols-outlined text-[11px]">verified</span>P2 • Alta (Vecino)</span>`;
       }
-      return `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-slate-200 text-slate-700 text-[10px] font-bold">P1 • Normal (Invitado)</span>`;
+      return `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-slate-200 text-slate-700 text-[10px] font-bold">P1 • Normal</span>`;
     }
 
     container.innerHTML = filtered.map(incident => `
-      <article class="bg-surface-container-lowest rounded-2xl p-5 shadow-sm hover:shadow-md border border-outline-variant/20 transition-all flex flex-col justify-between gap-3.5">
+      <article class="bg-surface-container-lowest rounded-2xl p-4 sm:p-5 shadow-sm hover:shadow-md border border-outline-variant/20 transition-all flex flex-col justify-between gap-3.5">
         
         <div>
           <!-- Cabecera de Prioridad y Folio -->
-          <div class="flex items-center justify-between gap-2 mb-2">
-            <div class="flex items-center gap-2 flex-wrap">
+          <div class="flex flex-wrap items-center justify-between gap-1.5 mb-2">
+            <div class="flex items-center gap-1.5 sm:gap-2 flex-wrap">
               <span class="font-mono text-xs font-bold text-primary">${incident.folio}</span>
               ${getPriorityBadge(incident.priorityLevel, incident.priorityLabel)}
             </div>
@@ -700,7 +708,7 @@
               </p>
             </div>
             ${incident.image ? `
-              <div class="w-13 h-13 rounded-xl overflow-hidden bg-surface-container shrink-0 shadow-sm">
+              <div class="w-14 h-14 rounded-xl overflow-hidden bg-surface-container shrink-0 shadow-sm">
                 <img src="${incident.image}" alt="Evidencia" class="w-full h-full object-cover">
               </div>
             ` : ''}
@@ -715,19 +723,19 @@
               <span class="truncate">${incident.assignedTeam || 'Sin cuadrilla asignada'}</span>
             </span>
           </div>
-          <div class="text-[11px] text-outline flex items-center justify-between pt-0.5">
-            <span>Actor: <strong>${incident.reportedBy || 'Anónimo'}</strong></span>
-            <span class="capitalize text-primary font-bold">(${incident.reportedByRole || 'invitado'})</span>
+          <div class="text-[11px] text-outline flex items-center justify-between gap-2 pt-0.5">
+            <span class="truncate">Actor: <strong>${incident.reportedBy || 'Anónimo'}</strong></span>
+            <span class="capitalize text-primary font-bold shrink-0">(${incident.reportedByRole || 'invitado'})</span>
           </div>
         </div>
 
         <!-- Botón Ver y Gestionar -->
         <div class="flex items-center justify-between pt-1 border-t border-outline-variant/10">
-          <span class="text-[11px] text-outline flex items-center gap-1">
-            <span class="material-symbols-outlined text-[13px]">location_city</span>
-            ${incident.sectorLabel || 'Sector'}
+          <span class="text-[11px] text-outline flex items-center gap-1 truncate">
+            <span class="material-symbols-outlined text-[13px] shrink-0">location_city</span>
+            <span class="truncate">${incident.sectorLabel || 'Sector'}</span>
           </span>
-          <button class="btn-open-detail flex items-center gap-1 px-3 py-1.5 rounded-xl bg-surface-container text-primary text-xs font-bold hover:bg-surface-container-high transition-all active:scale-95" data-id="${incident.id}">
+          <button class="btn-open-detail flex items-center gap-1 px-3 py-1.5 rounded-xl bg-surface-container text-primary text-xs font-bold hover:bg-surface-container-high transition-all active:scale-95 shrink-0" data-id="${incident.id}">
             <span>Gestionar Triaje</span>
             <span class="material-symbols-outlined text-[14px]">chevron_right</span>
           </button>
@@ -779,14 +787,14 @@
         <div>
           <div class="flex items-center justify-between text-xs mb-1.5">
             <span class="font-mono font-bold text-primary">${inc.folio}</span>
-            <span class="px-2 py-0.2 rounded-full ${inc.status === 'resolved' ? 'bg-emerald-100 text-emerald-800' : 'bg-primary-fixed text-primary'} font-bold text-[10px]">
+            <span class="px-2 py-0.5 rounded-full ${inc.status === 'resolved' ? 'bg-emerald-100 text-emerald-800' : 'bg-primary-fixed text-primary'} font-bold text-[10px]">
               ${inc.statusLabel}
             </span>
           </div>
           <h4 class="font-bold text-sm text-on-surface line-clamp-2">${inc.title}</h4>
           <p class="text-xs text-outline flex items-center gap-1 mt-1 truncate">
-            <span class="material-symbols-outlined text-[14px] text-primary">pin_drop</span>
-            <span>${inc.address}</span>
+            <span class="material-symbols-outlined text-[14px] text-primary shrink-0">pin_drop</span>
+            <span class="truncate">${inc.address}</span>
           </p>
         </div>
 
@@ -835,7 +843,7 @@
     if (dom.trackerResStatus) dom.trackerResStatus.textContent = found.statusLabel;
     if (dom.trackerResPriority) dom.trackerResPriority.textContent = found.priorityLabel || 'Prioridad Normal';
     if (dom.trackerResTitle) dom.trackerResTitle.textContent = found.title;
-    if (dom.trackerResAddress) dom.trackerResAddress.innerHTML = `<span class="material-symbols-outlined text-[14px]">pin_drop</span> ${found.address} • Cuadrilla: ${found.assignedTeam || 'En despacho'}`;
+    if (dom.trackerResAddress) dom.trackerResAddress.innerHTML = `<span class="material-symbols-outlined text-[14px] shrink-0">pin_drop</span> <span class="truncate">${found.address} • Cuadrilla: ${found.assignedTeam || 'En despacho'}</span>`;
 
     if (dom.folioResultBox) dom.folioResultBox.classList.remove('hidden');
     if (dom.btnViewTrackedDetail) dom.btnViewTrackedDetail.onclick = () => openIncidentModal(found.id);
@@ -877,13 +885,13 @@
           <div class="flex flex-col min-w-0">
             <div class="flex items-center gap-2 flex-wrap">
               <span class="font-mono text-xs font-bold text-on-surface">${inc.folio}</span>
-              <span class="px-2 py-0.2 rounded-full bg-error text-on-error font-bold text-[10px]">Urgente / Prioridad ${inc.priorityLevel}</span>
+              <span class="px-2 py-0.5 rounded-full bg-error text-on-error font-bold text-[10px]">Urgente / Prioridad ${inc.priorityLevel}</span>
               <span class="text-xs font-bold text-on-surface truncate">${inc.title}</span>
             </div>
             <span class="text-xs text-on-surface-variant truncate mt-0.5">${inc.address} • Reportado por: ${inc.reportedBy}</span>
           </div>
         </div>
-        <button onclick="window.civicApp.openModerationFor('${inc.id}')" class="px-3.5 py-1.5 rounded-lg bg-primary text-on-primary font-bold text-xs shrink-0 self-end sm:self-center shadow-sm hover:bg-primary-container transition-all flex items-center gap-1">
+        <button onclick="window.civicApp.openModerationFor('${inc.id}')" class="w-full sm:w-auto justify-center px-3.5 py-2 sm:py-1.5 rounded-lg bg-primary text-on-primary font-bold text-xs shrink-0 shadow-sm hover:bg-primary-container transition-all flex items-center gap-1">
           <span class="material-symbols-outlined text-[15px]">rate_review</span>
           <span>Moderar Ahora</span>
         </button>
@@ -1367,9 +1375,9 @@
     list.innerHTML = state.incidents.map(inc => {
       const isSelected = state.selectedModerationId === inc.id;
       return `
-      <div class="p-4 rounded-xl border ${isSelected ? 'border-primary ring-2 ring-primary/30 bg-primary/5' : 'border-outline-variant/20 bg-surface-container-lowest hover:border-primary/50'} shadow-sm flex items-center justify-between gap-3 cursor-pointer transition-all hover:shadow-md" onclick="window.civicApp.openModerationFor('${inc.id}')">
+      <div class="p-3.5 sm:p-4 rounded-xl border ${isSelected ? 'border-primary ring-2 ring-primary/30 bg-primary/5' : 'border-outline-variant/20 bg-surface-container-lowest hover:border-primary/50'} shadow-sm flex items-center justify-between gap-2.5 sm:gap-3 cursor-pointer transition-all hover:shadow-md" onclick="window.civicApp.openModerationFor('${inc.id}')">
         <div class="min-w-0">
-          <div class="flex items-center gap-2">
+          <div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
             <span class="font-mono text-xs font-bold text-primary">${inc.folio}</span>
             <span class="px-2 py-0.5 rounded-full bg-surface-container text-on-surface-variant font-bold text-[10px]">
               Prioridad ${inc.priorityLevel} (${inc.priorityLabel})
@@ -1523,9 +1531,9 @@
       return `
       <tr class="hover:bg-surface-container-low transition-colors">
         <td class="py-2.5 px-3 text-outline text-[11px] whitespace-nowrap">${formattedDate}</td>
-        <td class="py-2.5 px-3 font-bold text-primary">${log.action}</td>
-        <td class="py-2.5 px-3">${log.actor_name}</td>
-        <td class="py-2.5 px-3"><span class="px-1.5 py-0.2 rounded bg-surface-container text-[10px] font-bold">${log.actor_role}</span></td>
+        <td class="py-2.5 px-3 font-bold text-primary whitespace-nowrap">${log.action}</td>
+        <td class="py-2.5 px-3 whitespace-nowrap">${log.actor_name}</td>
+        <td class="py-2.5 px-3 whitespace-nowrap"><span class="px-1.5 py-0.5 rounded bg-surface-container text-[10px] font-bold">${log.actor_role}</span></td>
         <td class="py-2.5 px-3 text-on-surface-variant">${log.target_info || '-'}</td>
       </tr>
       `;
@@ -2506,9 +2514,9 @@
     dom.statusTabs.forEach(tab => {
       tab.addEventListener('click', () => {
         dom.statusTabs.forEach(t => {
-          t.className = 'tab-status flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold bg-surface-container-lowest text-on-surface-variant hover:bg-surface-container shadow-sm transition-all';
+          t.className = 'tab-status shrink-0 whitespace-nowrap flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold bg-surface-container-lowest text-on-surface-variant hover:bg-surface-container shadow-sm transition-all';
         });
-        tab.className = 'tab-status active flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold bg-primary text-on-primary shadow-sm transition-all';
+        tab.className = 'tab-status active shrink-0 whitespace-nowrap flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold bg-primary text-on-primary shadow-sm transition-all';
         state.filterStatus = tab.getAttribute('data-status');
         renderIncidentsList();
       });
@@ -2547,9 +2555,9 @@
     dom.mapSectorBtns.forEach(btn => {
       btn.addEventListener('click', () => {
         dom.mapSectorBtns.forEach(b => {
-          b.className = 'map-sector-btn px-3 py-1.5 rounded-full bg-surface-container text-on-surface-variant hover:bg-surface-container-high text-xs font-bold transition-all';
+          b.className = 'map-sector-btn shrink-0 whitespace-nowrap px-3 py-1.5 rounded-full bg-surface-container text-on-surface-variant hover:bg-surface-container-high text-xs font-bold transition-all';
         });
-        btn.className = 'map-sector-btn active px-3.5 py-1.5 rounded-full bg-primary text-on-primary text-xs font-bold transition-all shadow-sm';
+        btn.className = 'map-sector-btn active shrink-0 whitespace-nowrap px-3.5 py-1.5 rounded-full bg-primary text-on-primary text-xs font-bold transition-all shadow-sm';
         state.selectedSector = btn.getAttribute('data-sector');
         renderMapPins();
       });
