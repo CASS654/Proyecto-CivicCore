@@ -1,0 +1,88 @@
+/* ==========================================================================
+   CivicCore Design Enhancements & Animations
+   ========================================================================== */
+
+/* Animación de apertura suave para modales */
+@keyframes scaleUp {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-scale-up {
+  animation: scaleUp 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Ocultar scrollbars cuando se indica */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Pin del mapa con onda expansiva */
+.map-pin {
+  position: absolute;
+  transform: translate(-50%, -100%);
+  cursor: pointer;
+  transition: transform 0.2s ease, filter 0.2s ease;
+  z-index: 10;
+}
+
+.map-pin:hover {
+  transform: translate(-50%, -115%) scale(1.15);
+  z-index: 30;
+}
+
+.map-pin.active {
+  transform: translate(-50%, -120%) scale(1.25);
+  z-index: 35;
+}
+
+.map-pin-pulse {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  pointer-events: none;
+  animation: mapPing 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+@keyframes mapPing {
+  75%, 100% {
+    transform: translate(-50%, -50%) scale(2.2);
+    opacity: 0;
+  }
+}
+
+/* Transiciones entre vistas */
+.view-panel {
+  animation: fadeIn 0.25s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Estilos de inputs seleccionados */
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(0, 40, 142, 0.15);
+}

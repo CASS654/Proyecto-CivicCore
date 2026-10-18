@@ -1,0 +1,1808 @@
+<!DOCTYPE html>
+<html lang="es" class="h-full">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover"/>
+  <title>CivicCore - Sistema Municipal de Gestión e Incidencias Ciudadanas</title>
+  
+  <!-- Tipografía Inter y Material Symbols -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  
+  <!-- Configuración del Design System de CivicCore -->
+  <script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "primary": "#00288e",
+            "primary-container": "#1e40af",
+            "on-primary": "#ffffff",
+            "on-primary-container": "#a8b8ff",
+            "primary-fixed": "#dde1ff",
+            "primary-fixed-dim": "#b8c4ff",
+            "secondary": "#4f5c8e",
+            "secondary-container": "#b7c4fd",
+            "on-secondary": "#ffffff",
+            "on-secondary-container": "#435081",
+            "secondary-fixed": "#dce1ff",
+            "secondary-fixed-dim": "#b7c4fd",
+            "tertiary": "#003d28",
+            "tertiary-container": "#00563a",
+            "on-tertiary": "#ffffff",
+            "on-tertiary-container": "#5bcf9e",
+            "tertiary-fixed": "#85f8c4",
+            "tertiary-fixed-dim": "#68dba9",
+            "error": "#ba1a1a",
+            "error-container": "#ffdad6",
+            "on-error": "#ffffff",
+            "on-error-container": "#93000a",
+            "surface": "#f8f9ff",
+            "surface-dim": "#cbdbf5",
+            "surface-bright": "#f8f9ff",
+            "surface-container-lowest": "#ffffff",
+            "surface-container-low": "#eff4ff",
+            "surface-container": "#e5eeff",
+            "surface-container-high": "#dce9ff",
+            "surface-container-highest": "#d3e4fe",
+            "surface-variant": "#d3e4fe",
+            "surface-tint": "#3755c3",
+            "on-surface": "#0b1c30",
+            "on-surface-variant": "#444653",
+            "inverse-surface": "#213145",
+            "inverse-on-surface": "#eaf1ff",
+            "outline": "#757684",
+            "outline-variant": "#c4c5d5"
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif']
+          }
+        }
+      }
+    };
+  </script>
+
+  <link rel="stylesheet" href="/css/civiccore.css">
+</head>
+<body class="bg-surface font-sans text-on-surface min-h-screen flex flex-col antialiased selection:bg-primary-fixed selection:text-primary">
+
+  <div class="flex-1 flex flex-col lg:flex-row min-h-screen">
+    
+    <!-- ============================================================== -->
+    <!-- SIDEBAR DE ESCRITORIO (Visible para usuarios autenticados) -->
+    <!-- ============================================================== -->
+    <aside id="sidebar-desktop" class="hidden lg:flex flex-col w-72 bg-surface-container-low border-r border-outline-variant/30 shrink-0 sticky top-0 h-screen z-40">
+      <!-- Marca Municipal y Logo -->
+      <div class="h-16 px-6 flex items-center justify-between border-b border-outline-variant/20">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-xl bg-primary text-on-primary flex items-center justify-center shadow-md">
+            <span class="material-symbols-outlined text-[20px]">account_balance</span>
+          </div>
+          <div class="flex flex-col">
+            <span class="text-[10px] font-bold text-primary uppercase tracking-widest leading-none">Portal Municipal</span>
+            <span class="text-lg font-bold text-on-surface leading-tight tracking-tight">CivicCore</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Botón Destacado Nueva Incidencia (Disponible para Invitado, Vecino y Funcionario) -->
+      <div class="p-4 pb-2" id="sidebar-action-container">
+        <button id="btn-sidebar-nuevo" class="w-full flex items-center justify-center gap-2 py-3 px-4 bg-primary text-on-primary rounded-xl font-semibold shadow-md hover:bg-primary-container active:scale-[0.98] transition-all">
+          <span class="material-symbols-outlined text-[20px]">add_circle</span>
+          <span id="btn-sidebar-nuevo-text">Generar Reporte</span>
+        </button>
+      </div>
+
+      <!-- Menú de Navegación Principal Dinámico según Rol -->
+      <nav id="sidebar-nav-menu" class="flex-1 px-4 py-2 space-y-1.5 overflow-y-auto">
+        <!-- Renderizado dinámicamente según el rol en civiccore.js -->
+      </nav>
+
+      <!-- Perfil Activo en Barra Lateral -->
+      <div class="p-4 border-t border-outline-variant/20 bg-surface-container-lowest/60 space-y-2">
+        <div class="flex items-center gap-2.5 p-2 rounded-xl bg-surface-container-low border border-outline-variant/20">
+          <div class="w-8 h-8 rounded-full bg-primary text-on-primary flex items-center justify-center shrink-0">
+            <span class="material-symbols-outlined text-[18px]" id="sidebar-avatar-icon">person</span>
+          </div>
+          <div class="flex flex-col min-w-0">
+            <span id="sidebar-user-name" class="text-xs font-semibold text-on-surface truncate">Vecino Invitado</span>
+            <span id="sidebar-user-role" class="text-[10px] text-outline truncate">Invitado (Reporte Anónimo)</span>
+          </div>
+        </div>
+        <button id="sidebar-btn-change-password" onclick="window.civicApp.openChangeMyPasswordModal()" class="hidden w-full py-1.5 px-2.5 rounded-xl bg-surface-container hover:bg-surface-container-high text-on-surface text-[11px] font-semibold flex items-center justify-center gap-1.5 transition-all shadow-sm">
+          <span class="material-symbols-outlined text-[15px] text-primary">key</span>
+          <span>Cambiar mi contraseña</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- ============================================================== -->
+    <!-- ÁREA PRINCIPAL DE CONTENIDO (Móvil y Escritorio) -->
+    <!-- ============================================================== -->
+    <div class="flex-1 flex flex-col min-w-0">
+      
+      <!-- Topbar Header -->
+      <header class="sticky top-0 z-30 w-full bg-surface/90 backdrop-blur-xl border-b border-outline-variant/20 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 lg:px-8 h-14 flex items-center justify-between gap-4">
+          
+          <!-- Lado Izquierdo: Título de Vista -->
+          <div class="flex items-center gap-3">
+            <div class="lg:hidden flex items-center gap-2">
+              <div class="w-7 h-7 rounded-lg bg-primary text-on-primary flex items-center justify-center">
+                <span class="material-symbols-outlined text-[16px]">account_balance</span>
+              </div>
+            </div>
+            <div>
+              <span id="header-context-tag" class="hidden sm:inline-block text-[10px] font-bold text-primary uppercase tracking-wider">Módulo Operativo</span>
+              <h1 id="header-view-title" class="text-sm sm:text-base lg:text-lg font-bold text-on-surface tracking-tight leading-tight truncate max-w-[150px] sm:max-w-none">
+                Generar Reporte Ciudadano
+              </h1>
+            </div>
+          </div>
+
+          <!-- Lado Derecho: Estado, Usuario & Acceso -->
+          <div class="flex items-center gap-2 sm:gap-3">
+            <span id="system-badge-live" class="hidden md:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-tertiary-fixed text-on-tertiary-fixed">
+              <span class="w-1.5 h-1.5 rounded-full bg-tertiary animate-pulse"></span>
+              <span>Online</span>
+            </span>
+
+            <!-- Usuario Activo (oculto en modo invitado) -->
+            <div id="current-user-badge" class="hidden items-center gap-1.5 px-2.5 py-1 rounded-xl bg-surface-container-low text-on-surface font-medium text-xs border border-outline-variant/30">
+              <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+              <span id="user-display-name" class="max-w-[75px] sm:max-w-[130px] truncate inline-block">Invitado</span>
+              <span id="user-display-role" class="px-1.5 py-0.2 rounded-full bg-primary/10 text-primary font-bold uppercase text-[9px]">Público</span>
+            </div>
+
+            <!-- Botón Iniciar Sesión / Cerrar Sesión -->
+            <button id="btn-open-auth-modal" class="px-3.5 py-1.5 rounded-xl bg-primary text-on-primary hover:bg-primary-container font-bold text-xs flex items-center gap-1.5 shadow-sm transition-all active:scale-95">
+              <span class="material-symbols-outlined text-[16px]">lock</span>
+              <span id="btn-auth-text">Iniciar Sesión</span>
+            </button>
+
+            <button id="btn-sync-all" title="Sincronizar datos" class="w-9 h-9 flex items-center justify-center rounded-xl bg-surface-container-high hover:bg-surface-variant text-primary active:scale-95 transition-all">
+              <span class="material-symbols-outlined text-[18px]">sync</span>
+            </button>
+          </div>
+
+        </div>
+      </header>
+
+      <!-- Banner informativo de Nivel (Oculto) -->
+      <div id="role-info-banner" class="hidden"></div>
+
+      <!-- Contenedor Dinámico de Vistas -->
+      <main class="flex-1 max-w-7xl w-full mx-auto p-4 lg:p-8 pb-28 lg:pb-12">
+        
+        <!-- ============================================================== -->
+        <!-- VISTA NIVEL 1 / UNIVERSAL: FORMULARIO GENERAR REPORTE -->
+        <!-- (Visible para Invitado como vista principal, y accesible para Vecino/Trabajador) -->
+        <!-- ============================================================== -->
+        <section id="view-nuevo" class="view-panel space-y-6 max-w-4xl mx-auto">
+          
+          <!-- Encabezado del Formulario -->
+          <div class="bg-surface-container-lowest rounded-2xl p-6 shadow-sm border border-outline-variant/20">
+            <div class="flex items-center justify-between mb-4">
+              <div class="flex items-center gap-2">
+                <span class="px-2.5 py-0.5 rounded-full bg-secondary-fixed text-on-secondary-fixed font-bold text-xs">
+                  FOLIO OFICIAL
+                </span>
+                <span id="form-folio-preview" class="font-bold text-primary text-sm font-mono">#CIV-8951</span>
+              </div>
+              <span id="form-priority-preview-badge" class="flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface-container text-xs text-on-surface-variant font-bold">
+                <span class="w-2 h-2 rounded-full bg-secondary"></span>
+                Prioridad: Normal (Invitado)
+              </span>
+            </div>
+
+            <h2 class="text-2xl font-bold text-on-surface">Registrar Incidencia Ciudadana</h2>
+            <p class="text-sm text-on-surface-variant mt-1">Completa los datos del incidente urbano para su derivación comunal y asignación a cuadrillas.</p>
+
+            <!-- Barra de Progreso de 3 Pasos -->
+            <div class="mt-6 pt-4 border-t border-outline-variant/20">
+              <div class="flex items-center justify-between text-xs font-semibold mb-2 text-on-surface-variant">
+                <span id="step-label" class="text-primary font-bold">Paso 1: Clasificación & Canal</span>
+                <span id="step-indicator">Paso 1 de 3</span>
+              </div>
+              <div class="w-full bg-surface-container h-2 rounded-full overflow-hidden">
+                <div id="step-progress-bar" class="bg-primary h-full rounded-full transition-all duration-300 w-1/3"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Formulario Interactivo -->
+          <form id="incident-form" novalidate class="space-y-6">
+            
+            <!-- PASO 1: Categoría, Canal y Nivel de Urgencia -->
+            <div class="form-step space-y-6" data-step="1">
+              
+              <!-- Selector de Urgencia Vecinal / Oficial (Habilitado según Rol) -->
+              <div class="bg-surface-container-lowest rounded-2xl p-6 shadow-sm border border-outline-variant/20 space-y-3" id="urgency-selector-block">
+                <div class="flex items-center justify-between">
+                  <label class="font-bold text-on-surface flex items-center gap-2 text-base">
+                    <span class="material-symbols-outlined text-primary text-[20px]">priority_high</span>
+                    Nivel de Urgencia del Problema
+                  </label>
+                  <span id="urgency-role-note" class="text-xs px-2.5 py-0.5 rounded-full bg-surface-container text-on-surface-variant font-medium">
+                    Prioridad según perfil activo
+                  </span>
+                </div>
+                <p class="text-xs text-outline">Orden de atención: primero reportes de Funcionarios, luego de Vecinos verificados y al final de Invitados. La urgencia ordena dentro de cada grupo.</p>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
+                  <label class="relative flex items-center p-3.5 rounded-xl bg-surface-container-low cursor-pointer hover:bg-surface-container transition-all border-2 border-transparent has-[:checked]:border-primary has-[:checked]:bg-primary/5">
+                    <input type="radio" name="urgency" value="low" class="sr-only">
+                    <span class="material-symbols-outlined text-slate-500 text-[24px] mr-3">arrow_downward</span>
+                    <div>
+                      <p class="text-xs font-bold text-on-surface">Baja / Planificada</p>
+                      <p class="text-[11px] text-outline">Atención en cronograma</p>
+                    </div>
+                  </label>
+
+                  <label class="relative flex items-center p-3.5 rounded-xl bg-surface-container-low cursor-pointer hover:bg-surface-container transition-all border-2 border-transparent has-[:checked]:border-primary has-[:checked]:bg-primary/5">
+                    <input type="radio" name="urgency" value="medium" checked class="sr-only">
+                    <span class="material-symbols-outlined text-primary text-[24px] mr-3">schedule</span>
+                    <div>
+                      <p class="text-xs font-bold text-on-surface">Normal (Estándar)</p>
+                      <p class="text-[11px] text-outline">SLA de 24 a 48 horas</p>
+                    </div>
+                  </label>
+
+                  <label class="relative flex items-center p-3.5 rounded-xl bg-surface-container-low cursor-pointer hover:bg-surface-container transition-all border-2 border-transparent has-[:checked]:border-error has-[:checked]:bg-error/5">
+                    <input type="radio" name="urgency" value="high" class="sr-only">
+                    <span class="material-symbols-outlined text-error text-[24px] mr-3">warning</span>
+                    <div>
+                      <p class="text-xs font-bold text-error">Urgente / Peligro</p>
+                      <p class="text-[11px] text-outline">Prioridad preferente</p>
+                    </div>
+                  </label>
+                </div>
+              </div>
+
+              <!-- Origen del Requerimiento -->
+              <div class="bg-surface-container-lowest rounded-2xl p-6 shadow-sm border border-outline-variant/20 space-y-3">
+                <label class="font-bold text-on-surface flex items-center gap-2 text-base">
+                  <span class="material-symbols-outlined text-primary text-[20px]">hub</span>
+                  Canal de Ingreso
+                </label>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
+                  <label class="relative flex items-center p-3.5 rounded-xl bg-surface-container-low cursor-pointer hover:bg-surface-container transition-all border-2 border-transparent has-[:checked]:border-primary has-[:checked]:bg-primary/5">
+                    <input type="radio" name="channel" value="app" checked class="sr-only">
+                    <span class="material-symbols-outlined text-primary text-[24px] mr-3">smartphone</span>
+                    <div>
+                      <p class="text-xs font-bold text-on-surface">Portal Vecinal Web/App</p>
+                      <p class="text-[11px] text-outline">Digital ciudadano</p>
+                    </div>
+                  </label>
+
+                  <label class="relative flex items-center p-3.5 rounded-xl bg-surface-container-low cursor-pointer hover:bg-surface-container transition-all border-2 border-transparent has-[:checked]:border-primary has-[:checked]:bg-primary/5">
+                    <input type="radio" name="channel" value="phone" class="sr-only">
+                    <span class="material-symbols-outlined text-secondary text-[24px] mr-3">call</span>
+                    <div>
+                      <p class="text-xs font-bold text-on-surface">Central Telefónica 1414</p>
+                      <p class="text-[11px] text-outline">Llamada de urgencia</p>
+                    </div>
+                  </label>
+
+                  <label class="relative flex items-center p-3.5 rounded-xl bg-surface-container-low cursor-pointer hover:bg-surface-container transition-all border-2 border-transparent has-[:checked]:border-primary has-[:checked]:bg-primary/5">
+                    <input type="radio" name="channel" value="inspection" class="sr-only">
+                    <span class="material-symbols-outlined text-tertiary text-[24px] mr-3">badge</span>
+                    <div>
+                      <p class="text-xs font-bold text-on-surface">Inspección Municipal</p>
+                      <p class="text-[11px] text-outline">Patrulla de terreno</p>
+                    </div>
+                  </label>
+                </div>
+              </div>
+
+              <!-- Categoría de Servicio Urbano -->
+              <div class="bg-surface-container-lowest rounded-2xl p-6 shadow-sm border border-outline-variant/20 space-y-4">
+                <label class="font-bold text-on-surface flex items-center gap-2 text-base">
+                  <span class="material-symbols-outlined text-primary text-[20px]">category</span>
+                  Categoría del Servicio Comunal
+                </label>
+
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  <label class="relative flex flex-col items-center text-center p-4 rounded-xl bg-surface-container-low cursor-pointer hover:bg-surface-container transition-all border-2 border-transparent has-[:checked]:border-primary has-[:checked]:bg-primary/5">
+                    <input type="radio" name="category" value="vialidad" checked class="sr-only">
+                    <span class="material-symbols-outlined text-amber-600 text-[32px] mb-2">construction</span>
+                    <span class="text-xs font-bold text-on-surface">Baches y Calzadas</span>
+                  </label>
+
+                  <label class="relative flex flex-col items-center text-center p-4 rounded-xl bg-surface-container-low cursor-pointer hover:bg-surface-container transition-all border-2 border-transparent has-[:checked]:border-primary has-[:checked]:bg-primary/5">
+                    <input type="radio" name="category" value="aseo" class="sr-only">
+                    <span class="material-symbols-outlined text-emerald-600 text-[32px] mb-2">delete_outline</span>
+                    <span class="text-xs font-bold text-on-surface">Aseo y Basura</span>
+                  </label>
+
+                  <label class="relative flex flex-col items-center text-center p-4 rounded-xl bg-surface-container-low cursor-pointer hover:bg-surface-container transition-all border-2 border-transparent has-[:checked]:border-primary has-[:checked]:bg-primary/5">
+                    <input type="radio" name="category" value="alumbrado" class="sr-only">
+                    <span class="material-symbols-outlined text-yellow-500 text-[32px] mb-2">lightbulb</span>
+                    <span class="text-xs font-bold text-on-surface">Alumbrado Público</span>
+                  </label>
+
+                  <label class="relative flex flex-col items-center text-center p-4 rounded-xl bg-surface-container-low cursor-pointer hover:bg-surface-container transition-all border-2 border-transparent has-[:checked]:border-primary has-[:checked]:bg-primary/5">
+                    <input type="radio" name="category" value="aguas" class="sr-only">
+                    <span class="material-symbols-outlined text-blue-600 text-[32px] mb-2">water_drop</span>
+                    <span class="text-xs font-bold text-on-surface">Agua y Alcantarillado</span>
+                  </label>
+
+                  <label class="relative flex flex-col items-center text-center p-4 rounded-xl bg-surface-container-low cursor-pointer hover:bg-surface-container transition-all border-2 border-transparent has-[:checked]:border-primary has-[:checked]:bg-primary/5">
+                    <input type="radio" name="category" value="areas_verdes" class="sr-only">
+                    <span class="material-symbols-outlined text-green-600 text-[32px] mb-2">park</span>
+                    <span class="text-xs font-bold text-on-surface">Parques y Jardines</span>
+                  </label>
+
+                  <label class="relative flex flex-col items-center text-center p-4 rounded-xl bg-surface-container-low cursor-pointer hover:bg-surface-container transition-all border-2 border-transparent has-[:checked]:border-primary has-[:checked]:bg-primary/5">
+                    <input type="radio" name="category" value="seguridad" class="sr-only">
+                    <span class="material-symbols-outlined text-indigo-600 text-[32px] mb-2">shield</span>
+                    <span class="text-xs font-bold text-on-surface">Seguridad Ciudadana</span>
+                  </label>
+                </div>
+              </div>
+
+              <div class="flex justify-end">
+                <button type="button" class="btn-step-next px-6 py-3 rounded-xl bg-primary text-on-primary font-semibold text-sm flex items-center gap-2 hover:bg-primary-container shadow-md transition-all">
+                  <span>Siguiente: Ubicación & Datos</span>
+                  <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- PASO 2: Título, Ubicación y Persona que Reporta -->
+            <div class="form-step hidden space-y-6" data-step="2">
+              <div class="bg-surface-container-lowest rounded-2xl p-6 shadow-sm border border-outline-variant/20 space-y-4">
+                <h3 class="font-bold text-on-surface text-base flex items-center gap-2">
+                  <span class="material-symbols-outlined text-primary text-[20px]">pin_drop</span>
+                  Ubicación y Datos del Incidente
+                </h3>
+
+                <div>
+                  <label class="block text-xs font-bold text-on-surface mb-1" for="input-title">Título Resumido del Problema *</label>
+                  <input type="text" id="input-title" placeholder="Ej: Bache profundo frente a parada de micros" class="w-full h-11 px-4 rounded-xl bg-surface-container-low text-on-surface text-sm border border-outline-variant/30 focus:border-primary">
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label class="block text-xs font-bold text-on-surface mb-1" for="input-address">Dirección o Calle con Número *</label>
+                    <input type="text" id="input-address" placeholder="Ej: Av. Libertador Bernardo O'Higgins #1420" class="w-full h-11 px-4 rounded-xl bg-surface-container-low text-on-surface text-sm border border-outline-variant/30 focus:border-primary">
+                  </div>
+                  <div>
+                    <label class="block text-xs font-bold text-on-surface mb-1" for="select-sector">Sector Comunal *</label>
+                    <select id="select-sector" class="w-full h-11 px-4 rounded-xl bg-surface-container-low text-on-surface text-sm border border-outline-variant/30 focus:border-primary">
+                      <option value="centro">Centro Histórico</option>
+                      <option value="norte">Sector Norte</option>
+                      <option value="sur">Sector Sur</option>
+                      <option value="oriente">Sector Oriente</option>
+                      <option value="poniente">Sector Poniente</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label class="block text-xs font-bold text-on-surface mb-1" for="input-reportedBy">Nombre del Vecino o Funcionario que Registra</label>
+                  <input type="text" id="input-reportedBy" placeholder="Ej: Carmen Soto (o déjalo en blanco si eres anónimo)" class="w-full h-11 px-4 rounded-xl bg-surface-container-low text-on-surface text-sm border border-outline-variant/30 focus:border-primary">
+                </div>
+
+                <div>
+                  <label class="block text-xs font-bold text-on-surface mb-1" for="input-desc">Descripción Detallada (Opcional)</label>
+                  <textarea id="input-desc" rows="3" placeholder="Detalles de peligro, referencias geográficas o afectación al tránsito..." class="w-full p-4 rounded-xl bg-surface-container-low text-on-surface text-sm border border-outline-variant/30 focus:border-primary"></textarea>
+                </div>
+              </div>
+
+              <div class="flex justify-between">
+                <button type="button" class="btn-step-prev px-5 py-3 rounded-xl bg-surface-container text-on-surface font-semibold text-sm flex items-center gap-2 hover:bg-surface-container-high transition-all">
+                  <span class="material-symbols-outlined text-[18px]">arrow_back</span>
+                  <span>Atrás</span>
+                </button>
+                <button type="button" class="btn-step-next px-6 py-3 rounded-xl bg-primary text-on-primary font-semibold text-sm flex items-center gap-2 hover:bg-primary-container shadow-md transition-all">
+                  <span>Siguiente: Evidencia Fotográfica</span>
+                  <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- PASO 3: Fotografía y Envío Final -->
+            <div class="form-step hidden space-y-6" data-step="3">
+              <div class="bg-surface-container-lowest rounded-2xl p-6 shadow-sm border border-outline-variant/20 space-y-5">
+                <div>
+                  <h3 class="font-bold text-on-surface text-base flex items-center gap-2">
+                    <span class="material-symbols-outlined text-primary text-[20px]">add_a_photo</span>
+                    Evidencia Fotográfica
+                  </h3>
+                  <p class="text-xs text-outline mt-0.5">Sube una foto real desde tu dispositivo o selecciona una de muestra para ilustrar la situación:</p>
+                </div>
+
+                <!-- 1. Carga de Foto Propia -->
+                <div class="space-y-2">
+                  <span class="text-xs font-bold text-on-surface flex items-center gap-1.5">
+                    <span class="material-symbols-outlined text-primary text-[16px]">upload_file</span>
+                    Opción 1: Subir o Tomar Foto Propia (Recomendado)
+                  </span>
+
+                  <input type="file" id="input-custom-photo" accept="image/*" class="hidden">
+                  
+                  <div id="dropzone-custom-photo" onclick="document.getElementById('input-custom-photo').click()" class="border-2 border-dashed border-outline-variant/40 hover:border-primary rounded-2xl p-5 text-center cursor-pointer bg-surface-container-lowest hover:bg-surface-container-low transition-all group">
+                    <div id="dropzone-idle" class="flex flex-col items-center justify-center gap-2">
+                      <div class="w-12 h-12 rounded-full bg-primary/10 text-primary flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <span class="material-symbols-outlined text-[28px]">photo_camera</span>
+                      </div>
+                      <div>
+                        <p class="text-sm font-bold text-on-surface group-hover:text-primary transition-colors">Toca aquí para tomar foto o elegir archivo</p>
+                        <p class="text-xs text-outline mt-0.5">JPG, PNG o WEBP (desde tu cámara o galería)</p>
+                      </div>
+                    </div>
+
+                    <!-- Vista Previa de Foto Seleccionada -->
+                    <div id="dropzone-preview" class="hidden flex-col sm:flex-row items-center gap-4 text-left">
+                      <img id="custom-photo-img-preview" src="" alt="Vista previa" class="w-24 h-24 object-cover rounded-xl border border-outline-variant/30 shadow-sm shrink-0">
+                      <div class="flex-1 min-w-0">
+                        <span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold">✓ Foto Lista</span>
+                        <h4 id="custom-photo-name" class="font-bold text-sm text-on-surface truncate mt-1">foto.jpg</h4>
+                        <p id="custom-photo-size" class="text-xs text-outline">0 KB</p>
+                      </div>
+                      <button type="button" onclick="event.stopPropagation(); window.civicApp.removeCustomPhoto()" class="px-3 py-1.5 rounded-xl bg-error-container text-on-error-container text-xs font-bold hover:bg-error hover:text-white transition-all flex items-center gap-1 shrink-0">
+                        <span class="material-symbols-outlined text-[14px]">delete</span>
+                        <span>Quitar</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 2. Fotos de Muestra Rápidas -->
+                <div class="space-y-2 pt-2 border-t border-outline-variant/10">
+                  <span class="text-xs font-bold text-outline flex items-center gap-1.5">
+                    <span class="material-symbols-outlined text-[16px]">collections</span>
+                    Opción 2: O selecciona una imagen de muestra rápida
+                  </span>
+
+                  <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <label class="sample-photo-card relative rounded-xl overflow-hidden aspect-video bg-surface-container cursor-pointer border-2 border-transparent has-[:checked]:border-primary shadow-sm hover:opacity-90 transition-all">
+                      <input type="radio" name="sample_photo" value="https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?w=600&auto=format&fit=crop&q=80" checked class="sr-only">
+                      <img src="https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?w=600&auto=format&fit=crop&q=80" alt="Bache" class="w-full h-full object-cover">
+                      <span class="absolute bottom-1 left-1 px-1.5 py-0.5 rounded bg-black/60 text-white text-[10px]">Bache</span>
+                    </label>
+
+                    <label class="sample-photo-card relative rounded-xl overflow-hidden aspect-video bg-surface-container cursor-pointer border-2 border-transparent has-[:checked]:border-primary shadow-sm hover:opacity-90 transition-all">
+                      <input type="radio" name="sample_photo" value="https://images.unsplash.com/photo-1605600659873-d808a13e4d2a?w=600&auto=format&fit=crop&q=80" class="sr-only">
+                      <img src="https://images.unsplash.com/photo-1605600659873-d808a13e4d2a?w=600&auto=format&fit=crop&q=80" alt="Luminaria" class="w-full h-full object-cover">
+                      <span class="absolute bottom-1 left-1 px-1.5 py-0.5 rounded bg-black/60 text-white text-[10px]">Luz apagada</span>
+                    </label>
+
+                    <label class="sample-photo-card relative rounded-xl overflow-hidden aspect-video bg-surface-container cursor-pointer border-2 border-transparent has-[:checked]:border-primary shadow-sm hover:opacity-90 transition-all">
+                      <input type="radio" name="sample_photo" value="https://images.unsplash.com/photo-1530587191325-3db32d826c18?w=600&auto=format&fit=crop&q=80" class="sr-only">
+                      <img src="https://images.unsplash.com/photo-1530587191325-3db32d826c18?w=600&auto=format&fit=crop&q=80" alt="Basura" class="w-full h-full object-cover">
+                      <span class="absolute bottom-1 left-1 px-1.5 py-0.5 rounded bg-black/60 text-white text-[10px]">Microbasural</span>
+                    </label>
+
+                    <label class="sample-photo-card relative rounded-xl overflow-hidden aspect-video bg-surface-container cursor-pointer border-2 border-transparent has-[:checked]:border-primary shadow-sm hover:opacity-90 transition-all">
+                      <input type="radio" name="sample_photo" value="https://images.unsplash.com/photo-1584467735871-8e85353a8413?w=600&auto=format&fit=crop&q=80" class="sr-only">
+                      <img src="https://images.unsplash.com/photo-1584467735871-8e85353a8413?w=600&auto=format&fit=crop&q=80" alt="Agua" class="w-full h-full object-cover">
+                      <span class="absolute bottom-1 left-1 px-1.5 py-0.5 rounded bg-black/60 text-white text-[10px]">Fuga de agua</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              <div class="flex items-center justify-between">
+                <button type="button" class="btn-step-prev px-5 py-3 rounded-xl bg-surface-container text-on-surface font-semibold text-sm flex items-center gap-2 hover:bg-surface-container-high transition-all">
+                  <span class="material-symbols-outlined text-[18px]">arrow_back</span>
+                  <span>Atrás</span>
+                </button>
+                <button type="submit" id="btn-submit-form" class="px-8 py-3.5 rounded-xl bg-emerald-600 text-white font-bold text-sm flex items-center gap-2 hover:bg-emerald-700 shadow-lg shadow-emerald-600/30 active:scale-95 transition-all">
+                  <span class="material-symbols-outlined text-[20px]">send</span>
+                  <span>Confirmar y Enviar Reporte</span>
+                </button>
+              </div>
+            </div>
+
+          </form>
+
+        </section>
+
+        <!-- ============================================================== -->
+        <!-- VISTA NIVEL 2: PORTAL VECINAL CIUDADANO (Exclusiva para Vecino) -->
+        <!-- ============================================================== -->
+        <section id="view-vecino" class="view-panel hidden space-y-6">
+          
+          <!-- Banner Superior de Bienvenida Vecinal -->
+          <div class="bg-surface-container-lowest rounded-2xl p-6 shadow-sm border border-outline-variant/20 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <div class="flex items-center gap-2 mb-1.5">
+                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-tertiary-fixed text-on-tertiary-fixed font-bold text-xs">
+                  <span class="w-1.5 h-1.5 rounded-full bg-tertiary animate-pulse"></span>
+                  Modo Ciudadano Activo
+                </span>
+                <span class="text-xs text-outline font-medium">Junta de Vecinos Conectada</span>
+              </div>
+              <h2 class="text-2xl lg:text-3xl font-extrabold text-on-surface tracking-tight" id="portal-vecino-greeting">
+                ¡Hola, Vecino(a)!
+              </h2>
+              <p class="text-sm text-on-surface-variant mt-1">Tu cuenta vecinal cuenta con prioridad alta verificada en la mesa de despacho municipal.</p>
+            </div>
+            
+            <div class="flex items-center gap-2">
+              <button onclick="window.civicApp.switchView('view-nuevo')" class="px-4 py-2.5 rounded-xl bg-primary text-on-primary font-bold text-sm flex items-center gap-2 shadow-md hover:bg-primary-container active:scale-95 transition-all">
+                <span class="material-symbols-outlined text-[20px]">add_alert</span>
+                <span>Crear Reporte Vecinal</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Hero CTA Grande con diseño de stitch portal_vecinal_ciudadano -->
+          <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary-container via-primary to-primary text-on-primary p-6 lg:p-8 shadow-md">
+            <div class="absolute -right-6 -bottom-6 w-36 h-36 rounded-full bg-white/10 blur-xl pointer-events-none"></div>
+            <div class="absolute right-4 top-4 text-white/15 pointer-events-none">
+              <span class="material-symbols-outlined text-[90px]">campaign</span>
+            </div>
+            <div class="relative z-10 flex flex-col gap-3 max-w-xl">
+              <div class="flex items-center gap-2">
+                <span class="px-2.5 py-0.5 rounded-full bg-white/20 text-white font-bold text-xs uppercase tracking-wide">
+                  Acción Preferente
+                </span>
+                <span class="text-xs text-primary-fixed font-semibold">Respuesta Comprometida &lt; 24h</span>
+              </div>
+              <h3 class="text-xl lg:text-2xl font-bold text-white tracking-tight leading-snug">
+                ¿Viste un problema en tu barrio o sector?
+              </h3>
+              <p class="text-xs lg:text-sm text-primary-fixed leading-relaxed">
+                Baches, luminarias apagadas, basura acumulada o anomalías de agua. Tu reporte como vecino acreditado ingresa con alta prioridad en el sistema.
+              </p>
+              <div class="pt-2 flex flex-wrap items-center gap-3">
+                <button onclick="window.civicApp.switchView('view-nuevo')" class="px-5 py-3 rounded-xl bg-tertiary-fixed text-on-tertiary-fixed font-bold text-sm shadow-md hover:bg-tertiary-fixed-dim transition-all flex items-center gap-2 active:scale-95">
+                  <span class="material-symbols-outlined text-[20px]">add_alert</span>
+                  <span>Reportar con Prioridad Alta</span>
+                </button>
+                <span class="text-xs text-primary-fixed flex items-center gap-1">
+                  <span class="material-symbols-outlined text-[16px] text-tertiary-fixed">verified</span>
+                  <span>Sello Vecino Verificado</span>
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Rastreo Rápido de Solicitud (Folio Tracker interactivo) -->
+          <div class="rounded-2xl bg-surface-container-lowest p-6 shadow-sm border border-outline-variant/20 space-y-4">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2.5">
+                <div class="w-9 h-9 rounded-xl bg-surface-container-high flex items-center justify-center text-primary">
+                  <span class="material-symbols-outlined text-[20px]">travel_explore</span>
+                </div>
+                <div>
+                  <h3 class="font-bold text-base text-on-surface">Consulta Pública de Solicitud</h3>
+                  <p class="text-xs text-outline">Ingresa tu número de folio para ver estado, cuadrilla y fotos</p>
+                </div>
+              </div>
+              <span class="text-xs px-2.5 py-1 rounded-full bg-surface-container text-primary font-bold">En Vivo</span>
+            </div>
+
+            <form id="folio-tracker-form" class="flex flex-col sm:flex-row gap-2">
+              <div class="relative flex-1">
+                <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center font-mono text-outline font-bold">#</span>
+                <input type="text" id="folio-input" placeholder="CIV-8942" value="CIV-8942" class="w-full h-11 pl-8 pr-4 rounded-xl bg-surface-container-low text-on-surface uppercase font-bold text-sm focus:border-primary">
+              </div>
+              <button type="submit" class="h-11 px-5 rounded-xl bg-primary text-on-primary font-bold text-sm hover:bg-primary-container flex items-center justify-center gap-1.5 shrink-0 shadow-sm active:scale-95 transition-all">
+                <span>Rastrear Folio</span>
+                <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+              </button>
+            </form>
+
+            <!-- Resultado del Rastreo en Vivo -->
+            <div id="folio-result-box" class="p-4 rounded-xl bg-surface-container-low border border-outline-variant/20 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div class="flex items-start gap-3 min-w-0">
+                <div class="w-10 h-10 rounded-xl bg-secondary-container text-on-secondary-container flex items-center justify-center shrink-0">
+                  <span class="material-symbols-outlined text-[20px]">pending_actions</span>
+                </div>
+                <div class="flex flex-col min-w-0">
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <span id="tracker-res-folio" class="font-mono text-xs font-bold text-primary">#CIV-8942</span>
+                    <span id="tracker-res-status" class="px-2 py-0.5 rounded-full bg-secondary-fixed text-secondary font-bold text-[11px]">En Terreno</span>
+                    <span id="tracker-res-priority" class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold text-[11px]">Alta (Vecino)</span>
+                  </div>
+                  <h4 id="tracker-res-title" class="font-bold text-sm text-on-surface truncate mt-1">Acumulación de microbasural clandestino</h4>
+                  <p id="tracker-res-address" class="text-xs text-outline truncate flex items-center gap-1 mt-0.5">
+                    <span class="material-symbols-outlined text-[14px]">pin_drop</span>
+                    Sector Norte • Cuadrilla Aseo #03 asignada
+                  </p>
+                </div>
+              </div>
+              <button id="btn-view-tracked-detail" class="px-3.5 py-2 rounded-xl bg-surface-container-high hover:bg-surface-variant text-primary font-bold text-xs shrink-0 self-end sm:self-center transition-all flex items-center gap-1">
+                <span>Ver Ficha Completa</span>
+                <span class="material-symbols-outlined text-[16px]">chevron_right</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Mis Reportes Vecinales Recientes -->
+          <div class="space-y-4">
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 class="font-bold text-lg text-on-surface">Avisos y Reportes Comunitarios</h3>
+                <p class="text-xs text-outline">Listado con el estatus de las solicitudes vecinales</p>
+              </div>
+              <span id="vecino-report-count" class="px-2.5 py-1 rounded-full bg-surface-container text-primary font-bold text-xs">-- reportes</span>
+            </div>
+
+            <div id="vecino-incidents-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <!-- Cargado vía JS -->
+            </div>
+          </div>
+
+        </section>
+
+        <!-- ============================================================== -->
+        <!-- VISTA NIVEL 3: BANDEJA DE INCIDENCIAS (Exclusiva para Trabajador) -->
+        <!-- ============================================================== -->
+        <section id="view-incidencias" class="view-panel hidden space-y-6">
+          
+          <!-- Banner Contextual Operativo -->
+          <div class="bg-surface-container-lowest rounded-2xl p-4 lg:p-6 shadow-sm border border-outline-variant/20 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <div class="flex items-center gap-2 mb-1">
+                <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-primary-fixed text-primary uppercase tracking-wider">
+                  Operaciones Municipales
+                </span>
+                <span class="text-xs text-outline">Priorización automática activa</span>
+              </div>
+              <h2 class="text-xl lg:text-2xl font-bold text-on-surface">Bandeja de Despacho y Triaje</h2>
+              <p class="text-sm text-on-surface-variant mt-0.5">Control de incidencias ordenadas por nivel de prioridad (Crítica &gt; Muy Alta &gt; Alta &gt; Normal).</p>
+            </div>
+            
+            <div class="flex items-center gap-2">
+              <button onclick="window.civicApp.switchView('view-nuevo')" class="flex items-center gap-2 px-4 py-2.5 bg-primary text-on-primary rounded-xl font-semibold shadow-sm hover:bg-primary-container active:scale-95 transition-all">
+                <span class="material-symbols-outlined text-[18px]">add</span>
+                <span>Reporte Oficial</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Buscador y Filtros -->
+          <div class="flex flex-col sm:flex-row items-stretch gap-3">
+            <div class="relative flex-1">
+              <span class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-outline text-[20px] pointer-events-none">search</span>
+              <input type="text" id="input-search" placeholder="Buscar por Folio (#CIV-...), calle o problema..." class="w-full h-12 pl-11 pr-10 rounded-xl bg-surface-container-lowest text-on-surface placeholder:text-outline text-sm shadow-sm border border-outline-variant/30 focus:border-primary transition-all">
+              <button id="btn-clear-search" class="hidden absolute right-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full flex items-center justify-center text-outline hover:text-on-surface">
+                <span class="material-symbols-outlined text-[16px]">close</span>
+              </button>
+            </div>
+
+            <!-- Filtro de Categoría Rápido -->
+            <select id="select-filter-category" class="h-12 px-4 rounded-xl bg-surface-container-lowest text-on-surface text-sm font-medium border border-outline-variant/30 shadow-sm focus:border-primary">
+              <option value="all">Todas las categorías</option>
+              <option value="vialidad">Baches y Calzadas</option>
+              <option value="alumbrado">Alumbrado Público</option>
+              <option value="aseo">Aseo Urbano</option>
+              <option value="aguas">Agua y Alcantarillado</option>
+              <option value="areas_verdes">Parques y Jardines</option>
+              <option value="seguridad">Seguridad Ciudadana</option>
+            </select>
+          </div>
+
+          <!-- Pestañas de Estado con Contadores -->
+          <div class="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
+            <button class="tab-status active flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold bg-primary text-on-primary shadow-sm transition-all" data-status="all">
+              <span>Todas</span>
+              <span id="tab-count-all" class="px-2 py-0.5 rounded-full bg-white/20 text-white text-[11px]">0</span>
+            </button>
+            <button class="tab-status flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold bg-surface-container-lowest text-on-surface-variant hover:bg-surface-container shadow-sm transition-all" data-status="new">
+              <span class="w-2 h-2 rounded-full bg-primary animate-ping"></span>
+              <span>Nuevas</span>
+              <span id="tab-count-new" class="px-2 py-0.5 rounded-full bg-primary-fixed text-primary text-[11px]">0</span>
+            </button>
+            <button class="tab-status flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold bg-surface-container-lowest text-on-surface-variant hover:bg-surface-container shadow-sm transition-all" data-status="progress">
+              <span>En Curso</span>
+              <span id="tab-count-progress" class="px-2 py-0.5 rounded-full bg-secondary-fixed text-secondary text-[11px]">0</span>
+            </button>
+            <button class="tab-status flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold bg-surface-container-lowest text-on-surface-variant hover:bg-surface-container shadow-sm transition-all" data-status="resolved">
+              <span>Resueltas</span>
+              <span id="tab-count-resolved" class="px-2 py-0.5 rounded-full bg-tertiary-fixed text-tertiary text-[11px]">0</span>
+            </button>
+          </div>
+
+          <!-- Lista / Grid de Incidencias con badges de prioridad -->
+          <div id="incidents-container" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 lg:gap-6">
+            <div class="col-span-full py-16 text-center text-outline">
+              <span class="material-symbols-outlined text-4xl animate-spin mb-2">progress_activity</span>
+              <p>Cargando incidencias municipales...</p>
+            </div>
+          </div>
+
+        </section>
+
+        <!-- ============================================================== -->
+        <!-- VISTA NIVEL 3: MAPA COMUNAL INTERACTIVO (Trabajador) -->
+        <!-- ============================================================== -->
+        <section id="view-mapa" class="view-panel hidden space-y-6">
+          <div class="bg-surface-container-lowest rounded-2xl p-6 shadow-sm border border-outline-variant/20 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <div class="flex items-center gap-2 mb-1">
+                <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-tertiary-fixed text-on-tertiary-fixed">
+                  GEORREFERENCIACIÓN
+                </span>
+                <span class="text-xs text-outline">Cuadrantes territoriales</span>
+              </div>
+              <h2 class="text-xl lg:text-2xl font-bold text-on-surface">Mapa Comunal de Incidencias</h2>
+              <p class="text-sm text-on-surface-variant mt-0.5">Distribución espacial en tiempo real de requerimientos y cuadrillas asignadas.</p>
+            </div>
+
+            <!-- Filtros por sector -->
+            <div class="flex flex-wrap items-center gap-1.5">
+              <button data-sector="all" class="map-sector-btn active px-3.5 py-1.5 rounded-full bg-primary text-on-primary text-xs font-bold transition-all shadow-sm">Todos</button>
+              <button data-sector="centro" class="map-sector-btn px-3 py-1.5 rounded-full bg-surface-container text-on-surface-variant hover:bg-surface-container-high text-xs font-bold transition-all">Centro</button>
+              <button data-sector="norte" class="map-sector-btn px-3 py-1.5 rounded-full bg-surface-container text-on-surface-variant hover:bg-surface-container-high text-xs font-bold transition-all">Norte</button>
+              <button data-sector="sur" class="map-sector-btn px-3 py-1.5 rounded-full bg-surface-container text-on-surface-variant hover:bg-surface-container-high text-xs font-bold transition-all">Sur</button>
+              <button data-sector="oriente" class="map-sector-btn px-3 py-1.5 rounded-full bg-surface-container text-on-surface-variant hover:bg-surface-container-high text-xs font-bold transition-all">Oriente</button>
+              <button data-sector="poniente" class="map-sector-btn px-3 py-1.5 rounded-full bg-surface-container text-on-surface-variant hover:bg-surface-container-high text-xs font-bold transition-all">Poniente</button>
+            </div>
+          </div>
+
+          <!-- Canvas del Mapa Estilizado -->
+          <div class="relative w-full aspect-[4/3] sm:aspect-[16/9] bg-slate-900 rounded-3xl overflow-hidden shadow-xl border border-outline-variant/30">
+            <!-- Capa vectorial y calles simuladas con CSS -->
+            <div class="absolute inset-0 opacity-40 bg-[radial-gradient(#38bdf8_1px,transparent_1px)] [background-size:24px_24px]"></div>
+            
+            <!-- Cuadrantes comunales -->
+            <div class="absolute inset-0 grid grid-cols-3 grid-rows-3 pointer-events-none opacity-20 divide-x divide-y divide-cyan-400">
+              <div class="p-3 text-[10px] text-cyan-300 font-mono">SECTOR NORTE</div>
+              <div class="p-3 text-[10px] text-cyan-300 font-mono text-center">NORTE-CENTRO</div>
+              <div class="p-3 text-[10px] text-cyan-300 font-mono text-right">SECTOR ORIENTE</div>
+              <div class="p-3 text-[10px] text-cyan-300 font-mono">SECTOR PONIENTE</div>
+              <div class="p-3 text-[10px] text-cyan-300 font-mono text-center font-bold">CASCO HISTÓRICO</div>
+              <div class="p-3 text-[10px] text-cyan-300 font-mono text-right">ORIENTE ALTO</div>
+              <div class="p-3 text-[10px] text-cyan-300 font-mono">SUR-PONIENTE</div>
+              <div class="p-3 text-[10px] text-cyan-300 font-mono text-center">SECTOR SUR</div>
+              <div class="p-3 text-[10px] text-cyan-300 font-mono text-right">SUR-ORIENTE</div>
+            </div>
+
+            <!-- Pines de Incidencias -->
+            <div id="map-pins-layer" class="absolute inset-0"></div>
+
+            <!-- Leyenda Flotante -->
+            <div class="absolute bottom-4 left-4 z-20 bg-slate-900/90 backdrop-blur-md p-3 rounded-2xl border border-slate-700/60 text-xs text-slate-200 hidden sm:flex items-center gap-4">
+              <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-amber-500"></span><span>Vialidad</span></div>
+              <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-emerald-500"></span><span>Aseo</span></div>
+              <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-yellow-400"></span><span>Alumbrado</span></div>
+              <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-blue-500"></span><span>Aguas</span></div>
+            </div>
+
+            <!-- Previsualización de Incidencia Seleccionada -->
+            <div id="map-incident-preview" class="hidden absolute top-4 right-4 z-30 max-w-xs w-full bg-surface-container-lowest/95 backdrop-blur-md rounded-2xl p-4 shadow-2xl border border-outline-variant/30 text-on-surface cursor-pointer animate-scale-up">
+              <div class="flex items-center justify-between mb-2">
+                <span id="preview-folio" class="font-mono text-xs font-bold text-primary">#CIV-XXXX</span>
+                <span id="preview-status" class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-primary-fixed text-primary">Estado</span>
+                <button id="btn-close-map-preview" class="text-outline hover:text-on-surface">
+                  <span class="material-symbols-outlined text-[16px]">close</span>
+                </button>
+              </div>
+              <h4 id="preview-title" class="font-bold text-sm text-on-surface line-clamp-2">Título de la incidencia</h4>
+              <p id="preview-address" class="text-xs text-outline mt-1 truncate flex items-center gap-1"></p>
+              <p class="text-[11px] text-primary font-bold mt-2 flex items-center gap-1">
+                <span>Clic para gestionar ficha</span>
+                <span class="material-symbols-outlined text-[13px]">arrow_forward</span>
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============================================================== -->
+        <!-- VISTA NIVEL 3: PANEL DE GESTIÓN MUNICIPAL / KPIs (Trabajador) -->
+        <!-- ============================================================== -->
+        <section id="view-panel" class="view-panel hidden space-y-6">
+          <div class="bg-surface-container-lowest rounded-2xl p-6 shadow-sm border border-outline-variant/20 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <div class="flex items-center gap-2 mb-1">
+                <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-primary-fixed text-primary">DASHBOARD EJECUTIVO</span>
+                <span class="text-xs text-outline">Plataforma Territorial de Gestión</span>
+              </div>
+              <h2 class="text-xl lg:text-2xl font-bold text-on-surface">Panel de Gestión Municipal</h2>
+              <p class="text-sm text-on-surface-variant mt-0.5">Indicadores clave de desempeño territorial (KPIs), tasas de resolución y cuadrillas.</p>
+            </div>
+          </div>
+
+          <!-- Cuadrícula Bento de Métricas Principales -->
+          <div class="grid grid-cols-2 lg:grid-cols-5 gap-3 lg:gap-4">
+            <div class="bg-surface-container-lowest rounded-2xl p-4 lg:p-5 shadow-sm border border-outline-variant/20 flex flex-col justify-between">
+              <span class="text-xs font-bold text-outline uppercase tracking-wider">Total Reportes</span>
+              <div class="my-2">
+                <span id="kpi-total" class="text-2xl lg:text-3xl font-extrabold text-on-surface">0</span>
+              </div>
+              <span class="text-[11px] text-emerald-600 font-bold flex items-center gap-1">
+                <span class="material-symbols-outlined text-[14px]">trending_up</span>
+                <span>Registro General</span>
+              </span>
+            </div>
+
+            <div class="bg-surface-container-lowest rounded-2xl p-4 lg:p-5 shadow-sm border border-outline-variant/20 flex flex-col justify-between">
+              <span class="text-xs font-bold text-primary uppercase tracking-wider">Por Asignar</span>
+              <div class="my-2">
+                <span id="kpi-new" class="text-2xl lg:text-3xl font-extrabold text-primary">0</span>
+              </div>
+              <span class="text-[11px] text-outline">En cola de triaje</span>
+            </div>
+
+            <div class="bg-surface-container-lowest rounded-2xl p-4 lg:p-5 shadow-sm border border-outline-variant/20 flex flex-col justify-between">
+              <span class="text-xs font-bold text-secondary uppercase tracking-wider">En Terreno</span>
+              <div class="my-2">
+                <span id="kpi-progress" class="text-2xl lg:text-3xl font-extrabold text-secondary">0</span>
+              </div>
+              <span class="text-[11px] text-secondary font-bold">Cuadrillas activas</span>
+            </div>
+
+            <div class="bg-surface-container-lowest rounded-2xl p-4 lg:p-5 shadow-sm border border-outline-variant/20 flex flex-col justify-between">
+              <span class="text-xs font-bold text-tertiary uppercase tracking-wider">Resueltas</span>
+              <div class="my-2">
+                <span id="kpi-resolved" class="text-2xl lg:text-3xl font-extrabold text-tertiary">0</span>
+              </div>
+              <span class="text-[11px] text-tertiary font-bold">Cierre formal</span>
+            </div>
+
+            <div class="col-span-2 lg:col-span-1 bg-surface-container-lowest rounded-2xl p-4 lg:p-5 shadow-sm border border-outline-variant/20 flex flex-col justify-between">
+              <span class="text-xs font-bold text-emerald-600 uppercase tracking-wider">Efectividad</span>
+              <div class="my-2">
+                <span id="kpi-rate" class="text-2xl lg:text-3xl font-extrabold text-emerald-600">0%</span>
+              </div>
+              <span class="text-[11px] text-outline">Tasa de resolución</span>
+            </div>
+          </div>
+
+          <!-- Distribución por Categoría de Servicio y Estado de Cuadrillas -->
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="bg-surface-container-lowest rounded-2xl p-6 shadow-sm border border-outline-variant/20">
+              <h3 class="font-bold text-base text-on-surface mb-4 flex items-center gap-2">
+                <span class="material-symbols-outlined text-primary text-[20px]">bar_chart</span>
+                Distribución por Servicios Urbanos
+              </h3>
+              <div id="categories-stats-bars" class="space-y-3.5">
+                <!-- Barras cargadas vía JS -->
+              </div>
+            </div>
+
+            <div class="bg-surface-container-lowest rounded-2xl p-6 shadow-sm border border-outline-variant/20">
+              <h3 class="font-bold text-base text-on-surface mb-4 flex items-center gap-2">
+                <span class="material-symbols-outlined text-secondary text-[20px]">engineering</span>
+                Estado de Turnos y Cuadrillas
+              </h3>
+              <div class="space-y-3 text-sm">
+                <div class="p-3 rounded-xl bg-surface-container-low flex items-center justify-between">
+                  <div class="flex items-center gap-3">
+                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                    <span class="font-semibold text-on-surface">Cuadrilla Vialidad #01</span>
+                  </div>
+                  <span class="text-xs px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 font-bold">En faena</span>
+                </div>
+                <div class="p-3 rounded-xl bg-surface-container-low flex items-center justify-between">
+                  <div class="flex items-center gap-3">
+                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                    <span class="font-semibold text-on-surface">Cuadrilla Aseo #03</span>
+                  </div>
+                  <span class="text-xs px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 font-bold">En ruta</span>
+                </div>
+                <div class="p-3 rounded-xl bg-surface-container-low flex items-center justify-between">
+                  <div class="flex items-center gap-3">
+                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                    <span class="font-semibold text-on-surface">Emergencia Alumbrado #02</span>
+                  </div>
+                  <span class="text-xs px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 font-bold">Despachada</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============================================================== -->
+        <!-- VISTA NIVEL 4: SUPER ADMINISTRADOR HUB (Consola Maestra de Control) -->
+        <!-- ============================================================== -->
+        <section id="view-admin-hub" class="view-panel hidden space-y-6">
+          
+          <!-- Banner Superior Super Admin Root -->
+          <div class="rounded-2xl bg-surface-container p-6 shadow-sm border border-outline-variant/30 relative overflow-hidden">
+            <div class="absolute -right-10 -bottom-10 w-44 h-44 rounded-full bg-primary/5 pointer-events-none"></div>
+            <div class="flex flex-col gap-3 relative z-10">
+              <div class="flex flex-wrap items-center justify-between gap-2">
+                <div class="flex items-center gap-2">
+                  <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-error-container text-on-error-container font-bold text-xs uppercase tracking-wider">
+                    <span class="w-2 h-2 rounded-full bg-error animate-pulse"></span>
+                    Super Administrador
+                  </span>
+                  <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-secondary-fixed text-on-secondary-fixed font-semibold text-xs">
+                    <span class="material-symbols-outlined text-[14px]">gavel</span>
+                    Gobernanza & Seguridad
+                  </span>
+                </div>
+                <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-tertiary-fixed text-on-tertiary-fixed font-semibold text-xs">
+                  <span class="material-symbols-outlined text-[14px]">verified_user</span>
+                  Audit Log Activo (RFC 3161)
+                </span>
+              </div>
+
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <h2 class="text-2xl lg:text-3xl font-extrabold text-on-surface tracking-tight">Consola Maestra de Control</h2>
+                  <p class="text-sm text-on-surface-variant mt-1">Supervisión comunal integral, gobernanza de identidades, moderación canónica y trazabilidad institucional.</p>
+                </div>
+                <button onclick="window.civicApp.openChangeMyPasswordModal()" class="self-start sm:self-auto px-4 py-2.5 rounded-xl bg-surface-container-lowest hover:bg-surface-container text-on-surface border border-outline-variant/30 text-xs font-bold flex items-center gap-2 shadow-sm transition-all shrink-0">
+                  <span class="material-symbols-outlined text-[18px] text-primary">key</span>
+                  <span>Cambiar Mi Contraseña</span>
+                </button>
+              </div>
+
+              <!-- 4 KPIs del Super Administrador -->
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
+                <div class="p-4 rounded-xl bg-surface-container-lowest shadow-sm flex flex-col">
+                  <span class="text-xs text-on-surface-variant font-medium">Vecinos Registrados</span>
+                  <div class="flex items-baseline gap-1.5 mt-1">
+                    <span id="admin-kpi-vecinos" class="text-xl lg:text-2xl font-bold text-primary">1</span>
+                    <span class="material-symbols-outlined text-primary text-[16px]">groups</span>
+                  </div>
+                </div>
+
+                <div class="p-4 rounded-xl bg-surface-container-lowest shadow-sm flex flex-col">
+                  <span class="text-xs text-on-surface-variant font-medium">Funcionarios Activos</span>
+                  <div class="flex items-baseline gap-1.5 mt-1">
+                    <span id="admin-kpi-funcionarios" class="text-xl lg:text-2xl font-bold text-tertiary">1</span>
+                    <span class="material-symbols-outlined text-tertiary-container text-[16px]">badge</span>
+                  </div>
+                </div>
+
+                <div class="p-4 rounded-xl bg-surface-container-lowest shadow-sm flex flex-col">
+                  <span class="text-xs text-on-surface-variant font-medium">Total Reportes</span>
+                  <div class="flex items-baseline gap-1.5 mt-1">
+                    <span id="admin-kpi-reportes" class="text-xl lg:text-2xl font-bold text-secondary">0</span>
+                    <span class="material-symbols-outlined text-secondary text-[16px]">assignment</span>
+                  </div>
+                </div>
+
+                <div class="p-4 rounded-xl bg-surface-container-lowest shadow-sm flex flex-col">
+                  <span class="text-xs text-on-surface-variant font-medium">Incidentes Críticos</span>
+                  <div class="flex items-baseline gap-1.5 mt-1">
+                    <span id="admin-kpi-criticos" class="text-xl lg:text-2xl font-bold text-error">0</span>
+                    <span class="material-symbols-outlined text-error text-[16px]">warning</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Módulos de Acceso Rápido del Super Administrador -->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <button onclick="window.civicApp.switchView('view-admin-users')" class="p-5 rounded-2xl bg-surface-container-lowest border border-outline-variant/20 hover:border-primary shadow-sm hover:shadow-md transition-all text-left flex flex-col justify-between gap-3 group">
+              <div class="flex items-center justify-between">
+                <div class="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center group-hover:bg-primary group-hover:text-on-primary transition-colors">
+                  <span class="material-symbols-outlined text-[22px]">vpn_key</span>
+                </div>
+                <span class="material-symbols-outlined text-outline group-hover:text-primary transition-colors text-[20px]">arrow_forward</span>
+              </div>
+              <div>
+                <h4 class="font-bold text-base text-on-surface">Padrón & Emisión de Claves</h4>
+                <p class="text-xs text-on-surface-variant mt-1">Crear usuarios funcionarios (DOM, Aseo, Seguridad), emitir credenciales y gestionar accesos.</p>
+              </div>
+            </button>
+
+            <button onclick="window.civicApp.switchView('view-admin-moderation')" class="p-5 rounded-2xl bg-surface-container-lowest border border-outline-variant/20 hover:border-primary shadow-sm hover:shadow-md transition-all text-left flex flex-col justify-between gap-3 group">
+              <div class="flex items-center justify-between">
+                <div class="w-10 h-10 rounded-xl bg-error-container text-on-error-container flex items-center justify-center group-hover:bg-error group-hover:text-on-error transition-colors">
+                  <span class="material-symbols-outlined text-[22px]">edit_note</span>
+                </div>
+                <span class="material-symbols-outlined text-outline group-hover:text-primary transition-colors text-[20px]">arrow_forward</span>
+              </div>
+              <div>
+                <h4 class="font-bold text-base text-on-surface">Edición & Moderación</h4>
+                <p class="text-xs text-on-surface-variant mt-1">Alterar nivel de prioridad canónica (Crítica, Alta, etc.), corregir títulos o reasignar cuadrillas.</p>
+              </div>
+            </button>
+
+            <button onclick="window.civicApp.switchView('view-admin-audit')" class="p-5 rounded-2xl bg-surface-container-lowest border border-outline-variant/20 hover:border-primary shadow-sm hover:shadow-md transition-all text-left flex flex-col justify-between gap-3 group">
+              <div class="flex items-center justify-between">
+                <div class="w-10 h-10 rounded-xl bg-tertiary-fixed text-on-tertiary-fixed flex items-center justify-center group-hover:bg-tertiary group-hover:text-on-tertiary transition-colors">
+                  <span class="material-symbols-outlined text-[22px]">history_edu</span>
+                </div>
+                <span class="material-symbols-outlined text-outline group-hover:text-primary transition-colors text-[20px]">arrow_forward</span>
+              </div>
+              <div>
+                <h4 class="font-bold text-base text-on-surface">Auditoría & Trazabilidad</h4>
+                <p class="text-xs text-on-surface-variant mt-1">Log inmutable de fe pública bajo Ley 19.628 / RFC 3161 y configuración de parámetros.</p>
+              </div>
+            </button>
+          </div>
+
+          <!-- Alertas Críticas y Acciones Pendientes Prioritarias -->
+          <div class="bg-surface-container-lowest rounded-2xl p-6 shadow-sm border border-outline-variant/20 space-y-4">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-xl bg-error-container text-on-error-container flex items-center justify-center font-bold">
+                  <span class="material-symbols-outlined text-[20px]">emergency_home</span>
+                </div>
+                <div>
+                  <h3 class="font-bold text-base text-on-surface">Alertas Críticas y Prioritarias</h3>
+                  <p class="text-xs text-outline">Incidentes que demandan intervención o reclasificación inmediata</p>
+                </div>
+              </div>
+              <span class="px-2.5 py-1 rounded-full bg-error-container text-on-error-container font-bold text-xs flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-error animate-ping"></span>
+                <span>Prioritarias</span>
+              </span>
+            </div>
+
+            <div class="space-y-3" id="admin-critical-alerts-container">
+              <!-- Renderizado de alertas críticas en vivo -->
+            </div>
+          </div>
+
+        </section>
+
+        <!-- ============================================================== -->
+        <!-- VISTA NIVEL 4: GESTIÓN DE USUARIOS Y CLAVES (Super Admin) -->
+        <!-- ============================================================== -->
+        <section id="view-admin-users" class="view-panel hidden space-y-6">
+          <div class="bg-surface-container-lowest rounded-2xl p-6 shadow-sm border border-outline-variant/20 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <div class="flex items-center gap-2 mb-1">
+                <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-primary-fixed text-primary">GESTIÓN DE IDENTIDADES</span>
+                <span class="text-xs text-outline">Padrón Institucional & Vecinal</span>
+              </div>
+              <h2 class="text-2xl font-bold text-on-surface">Padrón y Emisión de Claves</h2>
+              <p class="text-sm text-on-surface-variant mt-0.5">Control centralizado de credenciales para funcionarios comunales y activación de vecinos.</p>
+            </div>
+          </div>
+
+          <!-- Formulario de Emisión de Credencial para Funcionario o Vecino -->
+          <div class="bg-surface-container-lowest rounded-2xl p-6 shadow-sm border border-outline-variant/20 space-y-4">
+            <h3 class="font-bold text-base text-on-surface flex items-center gap-2">
+              <span class="material-symbols-outlined text-primary text-[20px]">key</span>
+              Emisión de Clave Municipal / Nuevo Usuario
+            </h3>
+            
+            <form id="form-create-user" class="space-y-4">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-xs font-bold text-on-surface mb-1">Nombre Completo *</label>
+                  <input type="text" id="admin-user-name" required placeholder="Ej: Marcos Alarcón" class="w-full h-11 px-4 rounded-xl bg-surface-container-low text-on-surface text-sm border border-outline-variant/30 focus:border-primary">
+                </div>
+                <div>
+                  <label class="block text-xs font-bold text-on-surface mb-1">Correo Electrónico *</label>
+                  <input type="email" id="admin-user-email" required placeholder="Ej: marcos.alarcon@municipio.gov" class="w-full h-11 px-4 rounded-xl bg-surface-container-low text-on-surface text-sm border border-outline-variant/30 focus:border-primary">
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div>
+                  <label class="block text-xs font-bold text-on-surface mb-1">RUT / DNI *</label>
+                  <input type="text" id="admin-user-rut" placeholder="Ej: 16.421.905-3" class="w-full h-11 px-4 rounded-xl bg-surface-container-low text-on-surface text-sm border border-outline-variant/30 focus:border-primary">
+                </div>
+                <div>
+                  <label class="block text-xs font-bold text-on-surface mb-1">Rol / Atribución *</label>
+                  <select id="admin-user-role" class="w-full h-11 px-4 rounded-xl bg-surface-container-low text-on-surface text-sm border border-outline-variant/30 focus:border-primary">
+                    <option value="trabajador">Funcionario / Trabajador del Estado</option>
+                    <option value="vecino">Vecino Verificado</option>
+                    <option value="admin">Super Administrador</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-xs font-bold text-on-surface mb-1">Dirección / Departamento *</label>
+                  <input type="text" id="admin-user-dept" placeholder="Ej: DOM Obras, Seguridad 1414, DIMAO" value="Seguridad Ciudadana & 1414" class="w-full h-11 px-4 rounded-xl bg-surface-container-low text-on-surface text-sm border border-outline-variant/30 focus:border-primary">
+                </div>
+              </div>
+
+              <div class="flex items-center justify-between pt-2">
+                <span class="text-xs text-outline">Contraseña inicial por defecto: <code class="font-mono font-bold text-primary">civic123</code></span>
+                <button type="submit" class="px-6 py-2.5 rounded-xl bg-primary text-on-primary font-bold text-sm hover:bg-primary-container shadow-md transition-all active:scale-95 flex items-center gap-2">
+                  <span class="material-symbols-outlined text-[18px]">add_moderator</span>
+                  <span>Emitir Credencial</span>
+                </button>
+              </div>
+            </form>
+          </div>
+
+          <!-- Listado de Usuarios y Credenciales -->
+          <div class="bg-surface-container-lowest rounded-2xl p-6 shadow-sm border border-outline-variant/20 space-y-4">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <h3 class="font-bold text-base text-on-surface flex items-center gap-2">
+                <span class="material-symbols-outlined text-primary text-[20px]">badge</span>
+                Padrón de Usuarios y Credenciales
+              </h3>
+              <div class="flex items-center gap-2">
+                <button onclick="window.civicApp.openChangeMyPasswordModal()" class="px-3 py-1.5 rounded-xl bg-primary text-on-primary hover:bg-primary-container text-xs font-bold flex items-center gap-1 shadow-sm transition-all">
+                  <span class="material-symbols-outlined text-[14px]">key</span>
+                  <span>Cambiar Mi Contraseña</span>
+                </button>
+                <button id="btn-refresh-users" class="px-3 py-1.5 rounded-xl bg-surface-container hover:bg-surface-container-high text-xs font-bold text-on-surface flex items-center gap-1 transition-all">
+                  <span class="material-symbols-outlined text-[14px]">refresh</span>
+                  <span>Actualizar Lista</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs text-on-surface">
+                <thead>
+                  <tr class="border-b border-outline-variant/20 text-outline uppercase tracking-wider">
+                    <th class="py-3 px-3">Usuario</th>
+                    <th class="py-3 px-3">RUT / DNI</th>
+                    <th class="py-3 px-3">Rol</th>
+                    <th class="py-3 px-3">Departamento</th>
+                    <th class="py-3 px-3">Estado</th>
+                    <th class="py-3 px-3 text-right">Acción</th>
+                  </tr>
+                </thead>
+                <tbody id="admin-users-table-body" class="divide-y divide-outline-variant/10">
+                  <!-- Rellenado vía JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============================================================== -->
+        <!-- VISTA: EDICIÓN Y MODERACIÓN DE REPORTES (Super Admin) -->
+        <!-- ============================================================== -->
+        <section id="view-admin-moderation" class="view-panel hidden space-y-6">
+          <div class="bg-surface-container-lowest rounded-2xl p-6 shadow-sm border border-outline-variant/20 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <div class="flex items-center gap-2 mb-1">
+                <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-error-container text-on-error-container">
+                  PODER CANÓNICO DE INTERVENCIÓN
+                </span>
+                <span class="text-xs text-outline">Modificación directa de incidencias</span>
+              </div>
+              <h2 class="text-2xl font-bold text-on-surface">Gobernanza y Edición Directa</h2>
+              <p class="text-sm text-on-surface-variant mt-0.5">Selecciona cualquier reporte de la lista para abrir su editor, alterar su prioridad o reasignar cuadrillas.</p>
+            </div>
+          </div>
+
+          <!-- Selector Rápido de Reportes para Moderar -->
+          <div class="space-y-3">
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 class="font-bold text-base text-on-surface flex items-center gap-2">
+                  <span class="material-symbols-outlined text-primary text-[20px]">list_alt</span>
+                  <span>Reportes para Moderar</span>
+                </h3>
+                <p class="text-xs text-outline">Haz clic en un reporte de la lista para desplegar su editor.</p>
+              </div>
+            </div>
+            <div id="admin-moderation-list" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <!-- Rellenado vía JS -->
+            </div>
+          </div>
+
+          <!-- Formulario de Edición Canónica (Oculto inicialmente, aparece al hacer clic en un reporte) -->
+          <div id="admin-edit-panel" class="hidden bg-surface-container-lowest rounded-2xl p-6 shadow-lg border-2 border-primary space-y-4 transition-all">
+            <div class="flex items-center justify-between border-b border-outline-variant/20 pb-3">
+              <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-primary text-[22px]">tune</span>
+                <div>
+                  <h3 class="font-bold text-base text-on-surface">Editor Canónico de Incidencia</h3>
+                  <span class="text-xs text-outline">Modifica los parámetros oficiales de este reporte</span>
+                </div>
+              </div>
+              <div class="flex items-center gap-2">
+                <span id="mod-folio-tag" class="font-mono text-sm font-bold text-primary px-3 py-1 rounded-full bg-primary-fixed">Selecciona un reporte</span>
+                <button type="button" onclick="window.civicApp.closeModerationPanel()" class="w-8 h-8 rounded-full flex items-center justify-center text-outline hover:text-on-surface hover:bg-surface-container transition-all" title="Cerrar editor">
+                  <span class="material-symbols-outlined text-[20px]">close</span>
+                </button>
+              </div>
+            </div>
+
+            <form id="form-moderate-incident" class="space-y-4">
+              <input type="hidden" id="mod-incident-id" value="">
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-xs font-bold text-on-surface mb-1">Ajustar Nivel de Prioridad *</label>
+                  <select id="mod-priority-level" class="w-full h-11 px-4 rounded-xl bg-surface-container-low text-on-surface text-sm border border-outline-variant/30 focus:border-primary font-bold">
+                    <option value="1">Prioridad 1: Normal (Invitado / Rutinario)</option>
+                    <option value="2">Prioridad 2: Alta (Vecino Verificado)</option>
+                    <option value="3">Prioridad 3: Muy Alta (Funcionario Público)</option>
+                    <option value="4">Prioridad 4: Crítica (Super Admin / Riesgo Inminente)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label class="block text-xs font-bold text-on-surface mb-1">Reasignar Cuadrilla Municipal *</label>
+                  <input type="text" id="mod-assigned-team" placeholder="Ej: Cuadrilla Especial de Obras #01" class="w-full h-11 px-4 rounded-xl bg-surface-container-low text-on-surface text-sm border border-outline-variant/30 focus:border-primary">
+                </div>
+              </div>
+
+              <div>
+                <label class="block text-xs font-bold text-on-surface mb-1">Título Oficial del Reporte *</label>
+                <input type="text" id="mod-title" required class="w-full h-11 px-4 rounded-xl bg-surface-container-low text-on-surface text-sm border border-outline-variant/30 focus:border-primary">
+              </div>
+
+              <div>
+                <label class="block text-xs font-bold text-on-surface mb-1">Descripción Editada / Dictamen de Moderación</label>
+                <textarea id="mod-desc" rows="3" class="w-full p-4 rounded-xl bg-surface-container-low text-on-surface text-sm border border-outline-variant/30 focus:border-primary"></textarea>
+              </div>
+
+              <div class="flex items-center justify-end gap-3 pt-2">
+                <button type="button" onclick="window.civicApp.closeModerationPanel()" class="px-5 py-2.5 rounded-xl border border-outline-variant/40 text-on-surface-variant font-bold text-sm hover:bg-surface-container transition-all">
+                  Cancelar
+                </button>
+                <button type="submit" class="px-6 py-2.5 rounded-xl bg-primary text-on-primary font-bold text-sm hover:bg-primary-container shadow-md transition-all active:scale-95 flex items-center gap-2">
+                  <span class="material-symbols-outlined text-[18px]">save</span>
+                  <span>Guardar Cambios Canónicos</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </section>
+
+        <!-- ============================================================== -->
+        <!-- VISTA NIVEL 4: AUDITORÍA & TRAZABILIDAD DEL SISTEMA (Super Admin) -->
+        <!-- ============================================================== -->
+        <section id="view-admin-audit" class="view-panel hidden space-y-6">
+          <div class="bg-surface-container-lowest rounded-2xl p-6 shadow-sm border border-outline-variant/20 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <div class="flex items-center gap-2 mb-1">
+                <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-tertiary-fixed text-on-tertiary-fixed">
+                  FIRMA CRIPTOGRÁFICA ACTIVA
+                </span>
+                <span class="text-xs text-outline font-mono">RFC 3161 TSA-V4</span>
+              </div>
+              <h2 class="text-2xl font-bold text-on-surface">Auditoría & Trazabilidad Institucional</h2>
+              <p class="text-sm text-on-surface-variant mt-0.5">Registro inmutable de fe pública bajo Ley 19.628 con bitácora de eventos.</p>
+            </div>
+          </div>
+
+          <!-- Bento Métricas de Auditoría -->
+          <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
+            <div class="p-4 rounded-2xl bg-surface-container-low shadow-sm border border-outline-variant/20">
+              <span class="text-xs font-bold text-outline uppercase tracking-wider">Eventos en Bitácora</span>
+              <div class="mt-2 text-2xl font-bold text-on-surface" id="audit-stat-events">50+</div>
+              <span class="text-[11px] text-emerald-600 font-bold">Consolidado General</span>
+            </div>
+
+            <div class="p-4 rounded-2xl bg-surface-container-low shadow-sm border border-outline-variant/20">
+              <span class="text-xs font-bold text-outline uppercase tracking-wider">Acciones Super Admin</span>
+              <div class="mt-2 text-2xl font-bold text-primary">18</div>
+              <span class="text-[11px] text-outline">Super Admin</span>
+            </div>
+
+            <div class="p-4 rounded-2xl bg-surface-container-low shadow-sm border border-outline-variant/20">
+              <span class="text-xs font-bold text-outline uppercase tracking-wider">ClaveÚnica & Auth</span>
+              <div class="mt-2 text-2xl font-bold text-secondary">86</div>
+              <span class="text-[11px] text-outline">Validaciones Segpres</span>
+            </div>
+
+            <div class="p-4 rounded-2xl bg-surface-container-low shadow-sm border border-outline-variant/20">
+              <span class="text-xs font-bold text-outline uppercase tracking-wider">Integridad Cadena</span>
+              <div class="mt-2 text-2xl font-bold text-tertiary">100%</div>
+              <span class="text-[11px] text-tertiary font-bold">Cadena intacta</span>
+            </div>
+          </div>
+
+          <!-- Panel de Parámetros Globales de la Plataforma -->
+          <div class="bg-surface-container-lowest rounded-2xl p-6 shadow-sm border border-outline-variant/20 space-y-4">
+            <h3 class="font-bold text-base text-on-surface flex items-center gap-2">
+              <span class="material-symbols-outlined text-primary text-[20px]">settings</span>
+              Configuración y Parámetros del Sistema
+            </h3>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4" id="system-settings-grid">
+              <div>
+                <label class="block text-xs font-bold text-on-surface mb-1">Nombre Oficial Comuna</label>
+                <input type="text" id="setting-municipality" value="Municipalidad de Santiago Centro" class="w-full h-10 px-3 rounded-xl bg-surface-container-low text-on-surface text-xs border border-outline-variant/30">
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-on-surface mb-1">Central de Emergencias</label>
+                <input type="text" id="setting-phone" value="1414" class="w-full h-10 px-3 rounded-xl bg-surface-container-low text-on-surface text-xs border border-outline-variant/30">
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-on-surface mb-1">SLA Comprometido (Horas)</label>
+                <input type="number" id="setting-sla" value="24" class="w-full h-10 px-3 rounded-xl bg-surface-container-low text-on-surface text-xs border border-outline-variant/30">
+              </div>
+            </div>
+
+            <div class="flex justify-end">
+              <button id="btn-save-settings" class="px-5 py-2 rounded-xl bg-primary text-on-primary font-bold text-xs hover:bg-primary-container transition-all active:scale-95">
+                Guardar Parámetros
+              </button>
+            </div>
+          </div>
+
+          <!-- Tabla en Vivo de Logs de Auditoría -->
+          <div class="bg-surface-container-lowest rounded-2xl p-6 shadow-sm border border-outline-variant/20 space-y-4">
+            <div class="flex items-center justify-between">
+              <h3 class="font-bold text-base text-on-surface flex items-center gap-2">
+                <span class="material-symbols-outlined text-primary text-[20px]">receipt_long</span>
+                Log de Eventos y Trazabilidad del Sistema
+              </h3>
+              <button id="btn-refresh-audit" class="text-xs font-bold text-primary flex items-center gap-1 hover:underline">
+                <span class="material-symbols-outlined text-[14px]">refresh</span>
+                Actualizar Log
+              </button>
+            </div>
+
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs text-on-surface">
+                <thead>
+                  <tr class="border-b border-outline-variant/20 text-outline uppercase tracking-wider">
+                    <th class="py-3 px-3">Fecha / Hora</th>
+                    <th class="py-3 px-3">Acción</th>
+                    <th class="py-3 px-3">Actor</th>
+                    <th class="py-3 px-3">Rol</th>
+                    <th class="py-3 px-3">Detalle del Evento</th>
+                  </tr>
+                </thead>
+                <tbody id="audit-table-body" class="divide-y divide-outline-variant/10 font-mono">
+                  <!-- Rellenado vía JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+      </main>
+
+    </div>
+
+  </div>
+
+  <!-- ============================================================== -->
+  <!-- BARRA DE NAVEGACIÓN INFERIOR MÓVIL (Pantallas < 1024px) -->
+  <!-- ============================================================== -->
+  <nav id="mobile-bottom-nav" class="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-surface/95 backdrop-blur-xl border-t border-outline-variant/20 shadow-lg pb-[env(safe-area-inset-bottom,0px)]">
+    <div id="mobile-bottom-nav-container" class="flex justify-around items-center h-16 px-2 max-w-md mx-auto relative">
+      <!-- Rellenado dinámicamente según el rol en civiccore.js -->
+    </div>
+  </nav>
+
+  <!-- ============================================================== -->
+  <!-- MODAL DE AUTENTICACIÓN: LOGIN Y REGISTRO CIUDADANO (Vecino) -->
+  <!-- ============================================================== -->
+  <!-- MODAL DE ACCESO Y REGISTRO (CON CAMBIO DE INTERFAZ) -->
+  <!-- ============================================================== -->
+  <div id="modal-auth" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="bg-surface-container-lowest rounded-3xl max-w-md w-full flex flex-col overflow-hidden shadow-2xl border border-outline-variant/30 animate-scale-up">
+      
+      <!-- Cabecera Modal Dinámica -->
+      <div class="p-6 pb-4 border-b border-outline-variant/20 relative">
+        <button id="btn-close-auth-modal" class="absolute top-5 right-5 w-8 h-8 rounded-full bg-surface-container text-on-surface-variant flex items-center justify-center hover:bg-surface-container-high transition-all">
+          <span class="material-symbols-outlined text-[18px]">close</span>
+        </button>
+        <div class="flex items-center gap-3">
+          <div id="auth-modal-icon-container" class="w-10 h-10 rounded-xl bg-primary text-on-primary flex items-center justify-center shadow-md">
+            <span id="auth-modal-icon" class="material-symbols-outlined text-[22px]">account_balance</span>
+          </div>
+          <div>
+            <span id="auth-modal-badge" class="text-[10px] font-bold text-primary uppercase tracking-wider block leading-none">Portal Ciudadano</span>
+            <h3 id="auth-modal-title" class="text-lg font-bold text-on-surface leading-tight">Acceso a CivicCore</h3>
+          </div>
+        </div>
+      </div>
+
+      <!-- ================= VISTA 1: INTERFAZ DE INICIO DE SESIÓN ================= -->
+      <div id="auth-view-login" class="p-6 pt-4 space-y-4">
+        <form id="form-auth-login" class="space-y-4">
+          <div>
+            <label class="block text-xs font-bold text-on-surface mb-1.5">Correo Electrónico o RUT</label>
+            <div class="relative flex items-center">
+              <span class="material-symbols-outlined text-[18px] text-outline absolute left-3">person</span>
+              <input type="text" id="auth-input-email" required placeholder="correo@ejemplo.cl o RUT" autocomplete="username" class="w-full h-11 pl-10 pr-3 rounded-xl bg-surface-container-low text-on-surface text-sm border border-outline-variant/30 focus:border-primary">
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-on-surface mb-1.5">Contraseña</label>
+            <div class="relative flex items-center">
+              <span class="material-symbols-outlined text-[18px] text-outline absolute left-3">lock</span>
+              <input type="password" id="auth-input-password" required placeholder="••••••••" autocomplete="current-password" class="w-full h-11 pl-10 pr-10 rounded-xl bg-surface-container-low text-on-surface text-sm border border-outline-variant/30 focus:border-primary">
+              <button type="button" id="btn-toggle-password" class="absolute right-3 text-outline hover:text-on-surface">
+                <span class="material-symbols-outlined text-[18px]">visibility</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Botón de Inicio de Sesión -->
+          <button type="submit" id="btn-auth-login-submit" class="w-full h-11 rounded-xl bg-primary text-on-primary font-bold text-sm flex items-center justify-center gap-2 shadow-md hover:bg-primary-container active:scale-[0.98] transition-all">
+            <span>Iniciar Sesión</span>
+            <span class="material-symbols-outlined text-[18px]">login</span>
+          </button>
+        </form>
+
+        <!-- Botón encubierto que cambia a la interfaz de Registro -->
+        <div class="text-center pt-0.5">
+          <p class="text-xs text-outline">
+            ¿No tienes cuenta? 
+            <button type="button" onclick="window.civicApp.switchAuthView('register')" class="text-primary font-bold hover:underline transition-all">
+              Regístrate como vecino
+            </button>
+          </p>
+        </div>
+
+
+      </div>
+
+      <!-- ================= VISTA 2: OTRA INTERFAZ DEDICADA DE REGISTRO ================= -->
+      <div id="auth-view-register" class="hidden p-6 pt-4 space-y-4">
+        <div class="p-3 rounded-xl bg-emerald-50 border border-emerald-200 flex items-start gap-2.5 text-emerald-900">
+          <span class="material-symbols-outlined text-emerald-600 text-[18px] shrink-0 mt-0.5">verified_user</span>
+          <p class="text-[11px] leading-relaxed">
+            <strong>Registro de Vecino:</strong> Tu cuenta tendrá rango <strong>Vecino Verificado</strong> para seguimiento prioritario. *(Las cuentas de funcionario son asignadas por administración)*.
+          </p>
+        </div>
+
+        <form id="form-auth-register" class="space-y-3">
+          <div>
+            <label class="block text-xs font-bold text-on-surface mb-1">Nombre Completo *</label>
+            <div class="relative flex items-center">
+              <span class="material-symbols-outlined text-[18px] text-outline absolute left-3">badge</span>
+              <input type="text" id="register-input-name" required placeholder="Ej: Marcela Contreras" class="w-full h-10 pl-10 pr-3 rounded-xl bg-surface-container-low text-on-surface text-sm border border-outline-variant/30 focus:border-primary">
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-on-surface mb-1">Correo Electrónico *</label>
+            <div class="relative flex items-center">
+              <span class="material-symbols-outlined text-[18px] text-outline absolute left-3">mail</span>
+              <input type="email" id="register-input-email" required placeholder="tu.correo@ejemplo.cl" class="w-full h-10 pl-10 pr-3 rounded-xl bg-surface-container-low text-on-surface text-sm border border-outline-variant/30 focus:border-primary">
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-on-surface mb-1">RUT / Identificación (Opcional)</label>
+            <div class="relative flex items-center">
+              <span class="material-symbols-outlined text-[18px] text-outline absolute left-3">fingerprint</span>
+              <input type="text" id="register-input-rut" placeholder="Ej: 16.482.910-3" class="w-full h-10 pl-10 pr-3 rounded-xl bg-surface-container-low text-on-surface text-sm border border-outline-variant/30 focus:border-primary font-mono text-xs">
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block text-xs font-bold text-on-surface mb-1">Contraseña *</label>
+              <input type="password" id="register-input-password" required minlength="4" placeholder="Mínimo 4 caracteres" class="w-full h-10 px-3 rounded-xl bg-surface-container-low text-on-surface text-sm border border-outline-variant/30 focus:border-primary">
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-on-surface mb-1">Repetir Clave *</label>
+              <input type="password" id="register-input-confirm" required minlength="4" placeholder="Repite la clave" class="w-full h-10 px-3 rounded-xl bg-surface-container-low text-on-surface text-sm border border-outline-variant/30 focus:border-primary">
+            </div>
+          </div>
+
+          <button type="submit" id="btn-submit-register" class="w-full h-11 rounded-xl bg-primary text-on-primary font-bold text-sm flex items-center justify-center gap-2 shadow-md hover:bg-primary-container active:scale-[0.98] transition-all mt-1">
+            <span class="material-symbols-outlined text-[18px]">how_to_reg</span>
+            <span>Crear Mi Cuenta de Vecino</span>
+          </button>
+        </form>
+
+        <!-- Volver a Iniciar Sesión -->
+        <div class="text-center pt-0.5">
+          <p class="text-xs text-outline">
+            ¿Ya tienes una cuenta? 
+            <button type="button" onclick="window.civicApp.switchAuthView('login')" class="text-primary font-bold hover:underline transition-all">
+              Inicia sesión aquí
+            </button>
+          </p>
+        </div>
+
+
+      </div>
+
+    </div>
+  </div>
+
+
+
+  <!-- ============================================================== -->
+  <!-- MODAL DE DETALLE Y CAMBIO DE ESTADO DE INCIDENCIA (Trabajador) -->
+  <!-- ============================================================== -->
+  <div id="modal-incident-detail" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="bg-surface-container-lowest rounded-3xl max-w-xl w-full max-h-[90vh] flex flex-col overflow-hidden shadow-2xl border border-outline-variant/30 animate-scale-up">
+      
+      <!-- Cabecera Modal con Imagen -->
+      <div class="relative h-48 bg-surface-container shrink-0">
+        <img id="modal-img" src="" alt="Evidencia" class="w-full h-full object-cover">
+        <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+        <button id="btn-close-modal" class="absolute top-4 right-4 w-9 h-9 rounded-full bg-black/50 text-white flex items-center justify-center hover:bg-black/80 transition-all">
+          <span class="material-symbols-outlined text-[20px]">close</span>
+        </button>
+        <div class="absolute bottom-4 left-5 right-5 flex items-center justify-between">
+          <span id="modal-folio" class="text-xs font-mono font-bold text-white bg-primary px-2.5 py-1 rounded-full shadow">#CIV-XXXX</span>
+          <span id="modal-status-badge" class="text-xs font-bold px-3 py-1 rounded-full bg-white text-on-surface shadow">Estado</span>
+        </div>
+      </div>
+
+      <!-- Contenido Scrollable -->
+      <div class="p-6 overflow-y-auto space-y-4">
+        <div>
+          <div class="flex items-center gap-2 mb-1">
+            <span id="modal-priority-badge" class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-primary-fixed text-primary">Prioridad</span>
+          </div>
+          <h3 id="modal-title" class="text-xl font-bold text-on-surface leading-snug">Título de la incidencia</h3>
+          <p id="modal-address" class="text-sm text-outline flex items-center gap-1.5 mt-1">
+            <span class="material-symbols-outlined text-[18px] text-primary">pin_drop</span>
+            <span>Ubicación</span>
+          </p>
+        </div>
+
+        <p id="modal-desc" class="text-sm text-on-surface-variant leading-relaxed bg-surface-container-low p-3.5 rounded-xl border border-outline-variant/20">
+          Descripción completa del reporte vecinal...
+        </p>
+
+        <div class="grid grid-cols-2 gap-3 text-xs">
+          <div class="p-3 rounded-xl bg-surface-container">
+            <span class="text-outline block mb-0.5">Denunciante / Actor:</span>
+            <span id="modal-reportedBy" class="font-bold text-on-surface">Nombre</span>
+          </div>
+          <div class="p-3 rounded-xl bg-surface-container">
+            <span class="text-outline block mb-0.5">Canal de Entrada:</span>
+            <span id="modal-channel" class="font-bold text-on-surface">Canal</span>
+          </div>
+        </div>
+
+        <!-- Acciones de Gestión de Estado (Habilitadas para Trabajador y Admin) -->
+        <div class="pt-2 border-t border-outline-variant/20" id="modal-status-actions-container">
+          <label class="block text-xs font-bold text-outline mb-2 uppercase tracking-wider">Cambiar Estado de Incidencia:</label>
+          <div class="grid grid-cols-3 gap-2">
+            <button class="btn-change-status px-3 py-2.5 rounded-xl text-xs font-bold bg-primary-fixed text-primary hover:bg-primary hover:text-on-primary transition-all shadow-sm" data-new-status="new">
+              Marcar Nueva
+            </button>
+            <button class="btn-change-status px-3 py-2.5 rounded-xl text-xs font-bold bg-secondary-fixed text-secondary hover:bg-secondary hover:text-on-secondary transition-all shadow-sm" data-new-status="progress">
+              En Terreno
+            </button>
+            <button class="btn-change-status px-3 py-2.5 rounded-xl text-xs font-bold bg-tertiary-fixed text-tertiary hover:bg-tertiary hover:text-on-tertiary transition-all shadow-sm" data-new-status="resolved">
+              Resolver
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ============================================================== -->
+  <!-- MODAL DE ÉXITO Y COMPROBANTE OFICIAL DE REPORTE CIUDADANO -->
+  <!-- ============================================================== -->
+  <div id="modal-report-success" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="bg-surface-container-lowest rounded-3xl max-w-md w-full flex flex-col overflow-hidden shadow-2xl border border-outline-variant/30 animate-scale-up">
+      <div class="p-6 text-center space-y-4">
+        <div class="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto shadow-md">
+          <span class="material-symbols-outlined text-[36px]">check_circle</span>
+        </div>
+        
+        <div>
+          <span class="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full uppercase tracking-wider">¡Ingreso Confirmado!</span>
+          <h3 class="text-xl font-bold text-on-surface mt-2">Reporte Generado Exitosamente</h3>
+          <p class="text-xs text-outline mt-1">Tu solicitud ha sido guardada en el sistema municipal y asignada para despacho.</p>
+        </div>
+
+        <!-- Tarjeta de Folio Oficial -->
+        <div class="bg-surface-container-low rounded-2xl p-4 border border-outline-variant/20 text-left space-y-2.5">
+          <div class="flex items-center justify-between">
+            <span class="text-xs text-outline">Folio Oficial:</span>
+            <span id="success-modal-folio" class="font-mono text-base font-bold text-primary">#CIV-XXXX</span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-xs text-outline">Prioridad Asignada:</span>
+            <span id="success-modal-priority" class="text-xs font-bold px-2 py-0.5 rounded-full bg-primary/10 text-primary">Normal</span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-xs text-outline">Sector Comunal:</span>
+            <span id="success-modal-sector" class="text-xs font-semibold text-on-surface">Sector Centro</span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-xs text-outline">Estado Inicial:</span>
+            <span class="text-xs font-bold text-emerald-600 flex items-center gap-1">
+              <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+              Nueva / Por Asignar
+            </span>
+          </div>
+        </div>
+
+        <p class="text-[11px] text-outline text-left bg-surface-container-lowest p-2.5 rounded-xl border border-outline-variant/20">
+          💡 Guarda este número de folio para consultar el avance de tu reporte en cualquier momento.
+        </p>
+
+        <!-- Botones de Acción -->
+        <div class="pt-2 flex flex-col sm:flex-row gap-2">
+          <button id="btn-success-new-report" class="flex-1 py-3 px-4 rounded-xl bg-primary text-on-primary font-bold text-xs flex items-center justify-center gap-1.5 shadow-md hover:bg-primary-container active:scale-95 transition-all">
+            <span class="material-symbols-outlined text-[16px]">add_circle</span>
+            <span>Generar Otro Reporte</span>
+          </button>
+          <button id="btn-close-success-modal" class="py-3 px-4 rounded-xl bg-surface-container text-on-surface font-semibold text-xs hover:bg-surface-container-high transition-all">
+            <span>Cerrar</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================== -->
+  <!-- MODAL DE CAMBIO DE CONTRASEÑA (Para Propia Cuenta y Admin) -->
+  <!-- ============================================================== -->
+  <div id="modal-change-password" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="bg-surface-container-lowest rounded-3xl max-w-md w-full flex flex-col overflow-hidden shadow-2xl border border-outline-variant/30 animate-scale-up">
+      <div class="p-6 pb-4 border-b border-outline-variant/20 relative">
+        <button id="btn-close-password-modal" class="absolute top-5 right-5 w-8 h-8 rounded-full bg-surface-container text-on-surface-variant flex items-center justify-center hover:bg-surface-container-high transition-all">
+          <span class="material-symbols-outlined text-[18px]">close</span>
+        </button>
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-primary text-on-primary flex items-center justify-center shadow-md">
+            <span class="material-symbols-outlined text-[22px]">password</span>
+          </div>
+          <div>
+            <span class="text-[10px] font-bold text-primary uppercase tracking-wider block leading-none">Seguridad & Credenciales</span>
+            <h3 id="change-pwd-modal-title" class="text-lg font-bold text-on-surface leading-tight">Cambiar Contraseña</h3>
+          </div>
+        </div>
+      </div>
+
+      <div class="p-6 pt-4 space-y-4">
+        <!-- Tarjeta del usuario seleccionado -->
+        <div class="p-3 rounded-xl bg-surface-container-low border border-outline-variant/20 flex items-center gap-3">
+          <div class="w-9 h-9 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0">
+            <span class="material-symbols-outlined text-[20px]">person</span>
+          </div>
+          <div class="min-w-0 flex-1">
+            <span id="change-pwd-user-name" class="font-bold text-xs text-on-surface block truncate">Super Admin Root</span>
+            <span id="change-pwd-user-email" class="text-[11px] text-outline block truncate">admin@civiccore.gov</span>
+          </div>
+        </div>
+
+        <form id="form-change-password" class="space-y-4">
+          <input type="hidden" id="change-pwd-target-id" value="">
+          <input type="hidden" id="change-pwd-target-email" value="">
+
+          <div>
+            <label class="block text-xs font-bold text-on-surface mb-1.5">Nueva Contraseña *</label>
+            <div class="relative flex items-center">
+              <span class="material-symbols-outlined text-[18px] text-outline absolute left-3">lock</span>
+              <input type="password" id="input-new-password" required minlength="4" placeholder="Mínimo 4 caracteres" class="w-full h-11 pl-10 pr-10 rounded-xl bg-surface-container-low text-on-surface text-sm border border-outline-variant/30 focus:border-primary">
+              <button type="button" id="btn-toggle-new-pwd" class="absolute right-3 text-outline hover:text-on-surface">
+                <span class="material-symbols-outlined text-[18px]">visibility</span>
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-on-surface mb-1.5">Confirmar Nueva Contraseña *</label>
+            <div class="relative flex items-center">
+              <span class="material-symbols-outlined text-[18px] text-outline absolute left-3">lock_reset</span>
+              <input type="password" id="input-confirm-password" required minlength="4" placeholder="Repite la contraseña" class="w-full h-11 pl-10 pr-10 rounded-xl bg-surface-container-low text-on-surface text-sm border border-outline-variant/30 focus:border-primary">
+              <button type="button" id="btn-toggle-confirm-pwd" class="absolute right-3 text-outline hover:text-on-surface">
+                <span class="material-symbols-outlined text-[18px]">visibility</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="pt-2 flex gap-2">
+            <button type="button" id="btn-cancel-change-pwd" class="flex-1 py-2.5 px-4 rounded-xl bg-surface-container text-on-surface font-semibold text-xs hover:bg-surface-container-high transition-all">
+              Cancelar
+            </button>
+            <button type="submit" id="btn-submit-change-pwd" class="flex-1 py-2.5 px-4 rounded-xl bg-primary text-on-primary font-bold text-xs flex items-center justify-center gap-1.5 shadow-md hover:bg-primary-container active:scale-95 transition-all">
+              <span class="material-symbols-outlined text-[16px]">save</span>
+              <span>Guardar Clave</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================== -->
+  <!-- MODAL DE EDICIÓN DE USUARIO (Cambio de Correo y Datos) -->
+  <!-- ============================================================== -->
+  <div id="modal-edit-user" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="bg-surface-container-lowest rounded-3xl max-w-md w-full flex flex-col overflow-hidden shadow-2xl border border-outline-variant/30 animate-scale-up">
+      <div class="p-6 pb-4 border-b border-outline-variant/20 relative">
+        <button id="btn-close-edit-user-modal" type="button" onclick="window.civicApp.closeEditUserModal()" class="absolute top-5 right-5 w-8 h-8 rounded-full bg-surface-container text-on-surface-variant flex items-center justify-center hover:bg-surface-container-high transition-all">
+          <span class="material-symbols-outlined text-[18px]">close</span>
+        </button>
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-secondary text-on-secondary flex items-center justify-center shadow-md">
+            <span class="material-symbols-outlined text-[22px]">manage_accounts</span>
+          </div>
+          <div>
+            <span class="text-[10px] font-bold text-secondary uppercase tracking-wider block leading-none">Padrón de Usuarios</span>
+            <h3 class="text-lg font-bold text-on-surface leading-tight">Modificar Datos de Usuario</h3>
+          </div>
+        </div>
+      </div>
+
+      <form id="form-edit-user" class="p-6 pt-4 space-y-4">
+        <input type="hidden" id="edit-user-id" value="">
+
+        <div>
+          <label class="block text-xs font-bold text-on-surface mb-1.5">Nombre Completo *</label>
+          <div class="relative flex items-center">
+            <span class="material-symbols-outlined text-[18px] text-outline absolute left-3">person</span>
+            <input type="text" id="edit-user-name" required placeholder="Ej: Carmen Soto" class="w-full h-11 pl-10 pr-4 rounded-xl bg-surface-container-low text-on-surface text-sm border border-outline-variant/30 focus:border-primary">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-on-surface mb-1.5">Correo Electrónico *</label>
+          <div class="relative flex items-center">
+            <span class="material-symbols-outlined text-[18px] text-outline absolute left-3">mail</span>
+            <input type="email" id="edit-user-email" required placeholder="usuario@comuna.cl" class="w-full h-11 pl-10 pr-4 rounded-xl bg-surface-container-low text-on-surface text-sm border border-outline-variant/30 focus:border-primary">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-on-surface mb-1.5">RUT / Identificación</label>
+            <input type="text" id="edit-user-rut" placeholder="14.283.910-4" class="w-full h-11 px-3 rounded-xl bg-surface-container-low text-on-surface text-sm border border-outline-variant/30 focus:border-primary font-mono text-xs">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-on-surface mb-1.5">Rol de Acceso *</label>
+            <select id="edit-user-role" class="w-full h-11 px-3 rounded-xl bg-surface-container-low text-on-surface text-sm border border-outline-variant/30 focus:border-primary font-bold">
+              <option value="vecino">Vecino Verificado</option>
+              <option value="trabajador">Funcionario Municipal</option>
+              <option value="admin">Super Administrador</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-on-surface mb-1.5">Departamento / Junta / Unidad</label>
+          <input type="text" id="edit-user-dept" placeholder="Ej: Junta de Vecinos / Obras" class="w-full h-11 px-4 rounded-xl bg-surface-container-low text-on-surface text-sm border border-outline-variant/30 focus:border-primary">
+        </div>
+
+        <div class="pt-2 flex gap-2">
+          <button type="button" onclick="window.civicApp.closeEditUserModal()" class="flex-1 py-2.5 px-4 rounded-xl bg-surface-container text-on-surface font-semibold text-xs hover:bg-surface-container-high transition-all">
+            Cancelar
+          </button>
+          <button type="submit" id="btn-submit-edit-user" class="flex-1 py-2.5 px-4 rounded-xl bg-primary text-on-primary font-bold text-xs flex items-center justify-center gap-1.5 shadow-md hover:bg-primary-container active:scale-95 transition-all">
+            <span class="material-symbols-outlined text-[16px]">save</span>
+            <span>Guardar Cambios</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============================================================== -->
+  <!-- MENÚ FLOTANTE DE OPCIONES DE USUARIO (Acciones rápidas) -->
+  <!-- ============================================================== -->
+  <div id="user-actions-dropdown-menu" class="hidden fixed z-[999] w-64 bg-surface-container-lowest rounded-2xl shadow-2xl border border-outline-variant/30 py-2 animate-scale-up text-xs">
+    <div class="px-3.5 py-2 border-b border-outline-variant/20 mb-1">
+      <div id="dropdown-user-name" class="font-bold text-on-surface truncate">Nombre Usuario</div>
+      <div id="dropdown-user-email" class="text-[11px] text-outline truncate">usuario@comuna.cl</div>
+    </div>
+
+    <button type="button" id="dropdown-btn-password" class="w-full px-3.5 py-2.5 text-left flex items-center gap-2.5 hover:bg-surface-container text-on-surface transition-colors">
+      <div class="w-7 h-7 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
+        <span class="material-symbols-outlined text-[16px]">key</span>
+      </div>
+      <div>
+        <div class="font-bold text-xs">Cambiar Contraseña</div>
+        <div class="text-[10px] text-outline">Restablecer clave de acceso</div>
+      </div>
+    </button>
+
+    <button type="button" id="dropdown-btn-edit" class="w-full px-3.5 py-2.5 text-left flex items-center gap-2.5 hover:bg-surface-container text-on-surface transition-colors">
+      <div class="w-7 h-7 rounded-lg bg-secondary/10 text-secondary flex items-center justify-center shrink-0">
+        <span class="material-symbols-outlined text-[16px]">mail</span>
+      </div>
+      <div>
+        <div class="font-bold text-xs">Cambiar Correo / Datos</div>
+        <div class="text-[10px] text-outline">Editar email, nombre o rol</div>
+      </div>
+    </button>
+
+    <div class="my-1 border-t border-outline-variant/10"></div>
+
+    <button type="button" id="dropdown-btn-status" class="w-full px-3.5 py-2.5 text-left flex items-center gap-2.5 hover:bg-surface-container transition-colors">
+      <div id="dropdown-status-icon-container" class="w-7 h-7 rounded-lg bg-error-container text-on-error-container flex items-center justify-center shrink-0">
+        <span id="dropdown-status-icon" class="material-symbols-outlined text-[16px]">block</span>
+      </div>
+      <div>
+        <div id="dropdown-status-title" class="font-bold text-xs text-error">Suspender Usuario</div>
+        <div id="dropdown-status-subtitle" class="text-[10px] text-outline">Inhabilitar temporalmente</div>
+      </div>
+    </button>
+  </div>
+
+  <!-- Contenedor de Alertas Toast -->
+  <div id="toast-container" class="fixed top-4 sm:top-12 right-3 sm:right-5 left-3 sm:left-auto max-w-sm z-50 space-y-2 pointer-events-none"></div>
+
+  <!-- Scripts de la Aplicación -->
+  <script src="/js/civiccore.js"></script>
+</body>
+</html>
