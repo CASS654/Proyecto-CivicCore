@@ -273,6 +273,8 @@
     }
 
     if (!options.keepScroll) {
+      const mainScroll = document.getElementById('main-scroll-container');
+      if (mainScroll) mainScroll.scrollTo({ top: 0, behavior: 'smooth' });
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   }
@@ -344,7 +346,9 @@
         dom.currentUserBadge.classList.add('hidden');
         dom.currentUserBadge.classList.remove('flex');
       }
+      const btnSysSettings = document.getElementById('sidebar-btn-system-settings');
       if (dom.sidebarBtnChangePassword) dom.sidebarBtnChangePassword.classList.add('hidden');
+      if (btnSysSettings) btnSysSettings.classList.add('col-span-full');
       if (dom.btnAuthText) dom.btnAuthText.textContent = 'Iniciar Sesión';
       if (dom.roleInfoBanner) {
         dom.roleInfoBanner.innerHTML = '';
@@ -352,6 +356,7 @@
       }
     } else {
       // Para usuarios autenticados: mostrar sidebar, barra móvil y badge de usuario
+      const btnSysSettings = document.getElementById('sidebar-btn-system-settings');
       if (dom.sidebarDesktop) dom.sidebarDesktop.classList.remove('lg:hidden');
       if (dom.mobileBottomNav) dom.mobileBottomNav.classList.remove('hidden');
       if (dom.currentUserBadge) {
@@ -359,6 +364,7 @@
         dom.currentUserBadge.classList.add('flex');
       }
       if (dom.sidebarBtnChangePassword) dom.sidebarBtnChangePassword.classList.remove('hidden');
+      if (btnSysSettings) btnSysSettings.classList.remove('col-span-full');
       if (dom.btnAuthText) dom.btnAuthText.textContent = 'Cerrar Sesión';
       if (dom.roleInfoBanner) {
         dom.roleInfoBanner.innerHTML = '';
@@ -2355,14 +2361,397 @@
   }
 
   // ==========================================
+  // Centro de Configuración del Sistema, Cuenta, Temas y Accesibilidad
+  // ==========================================
+  const DEFAULT_SYSTEM_PREFS = {
+    theme: 'light',          // 'light' | 'dark' | 'system'
+    accent: 'blue',          // 'blue' | 'emerald' | 'indigo' | 'amber' | 'slate'
+    fontScale: 'normal',     // 'sm' | 'normal' | 'lg' | 'xl'
+    compactCards: false,
+    highContrast: false,
+    reduceMotion: false,
+    showToasts: true,
+    soundAlerts: false,
+    defaultSector: 'centro', // 'centro' | 'norte' | 'sur' | 'oriente' | 'poniente'
+    defaultReporter: '',
+    autoSyncSec: 0           // 0 | 30 | 60 | 300
+  };
+
+  let systemPrefs = loadSystemPrefsFromStorage();
+  let autoSyncIntervalId = null;
+
+  function loadSystemPrefsFromStorage() {
+    try {
+      const raw = localStorage.getItem('civiccore_system_prefs');
+      if (!raw) return { ...DEFAULT_SYSTEM_PREFS };
+      return { ...DEFAULT_SYSTEM_PREFS, ...JSON.parse(raw) };
+    } catch (e) {
+      return { ...DEFAULT_SYSTEM_PREFS };
+    }
+  }
+
+  function saveSystemPrefsToStorage() {
+    try {
+      localStorage.setItem('civiccore_system_prefs', JSON.stringify(systemPrefs));
+    } catch (e) {}
+  }
+
+  function isDarkActive() {
+    if (systemPrefs.theme === 'dark') return true;
+    if (systemPrefs.theme === 'light') return false;
+    return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  }
+
+  function switchSettingsTab(tabName) {
+    document.querySelectorAll('.settings-tab-btn').forEach(btn => {
+      const t = btn.getAttribute('data-settings-tab');
+      if (t === tabName) {
+        btn.className = 'settings-tab-btn active shrink-0 px-3.5 py-2 rounded-xl font-bold text-xs flex items-center gap-1.5 bg-primary text-on-primary shadow-sm transition-all';
+      } else {
+        btn.className = 'settings-tab-btn shrink-0 px-3.5 py-2 rounded-xl font-semibold text-xs flex items-center gap-1.5 text-on-surface-variant hover:bg-surface-container transition-all';
+      }
+    });
+
+    ['appearance', 'account', 'preferences', 'accessibility'].forEach(panelKey => {
+      const panel = document.getElementById(`settings-panel-${panelKey}`);
+      if (panel) {
+        panel.classList.toggle('hidden', panelKey !== tabName);
+      }
+    });
+
+    if (tabName === 'account') {
+      syncSettingsAccountTab();
+    }
+  }
+
+  function syncSettingsAccountTab() {
+    const user = state.currentUser || { role: 'invitado', name: 'Vecino Invitado', email: '' };
+    const isGuest = user.role === 'invitado';
+    const roleConfig = ROLE_PERMISSIONS[user.role] || ROLE_PERMISSIONS.invitado;
+
+    const nameEl = document.getElementById('settings-account-name');
+    const roleBadgeEl = document.getElementById('settings-account-role-badge');
+    const emailEl = document.getElementById('settings-account-email');
+    const iconEl = document.getElementById('settings-account-avatar-icon');
+    const guestActions = document.getElementById('settings-account-guest-actions');
+    const authActions = document.getElementById('settings-account-auth-actions');
+    const guestBlock = document.getElementById('settings-guest-profile-block');
+    const authBlock = document.getElementById('settings-authenticated-profile-block');
+
+    if (nameEl) nameEl.textContent = user.name || 'Vecino Invitado';
+    if (roleBadgeEl) roleBadgeEl.textContent = roleConfig.label;
+    if (emailEl) {
+      emailEl.textContent = isGuest ? 'Modo público sin sesión iniciada' : `${user.email || ''} • ${user.department || 'Comunidad'}`;
+    }
+    if (iconEl) {
+      iconEl.textContent = user.role === 'admin' ? 'shield_person' : (user.role === 'trabajador' ? 'engineering' : (user.role === 'vecino' ? 'cottage' : 'person'));
+    }
+
+    if (guestActions) guestActions.classList.toggle('hidden', !isGuest);
+    if (authActions) authActions.classList.toggle('hidden', isGuest);
+    if (guestBlock) guestBlock.classList.toggle('hidden', !isGuest);
+    if (authBlock) authBlock.classList.toggle('hidden', isGuest);
+
+    if (!isGuest) {
+      const pName = document.getElementById('settings-profile-name');
+      const pEmail = document.getElementById('settings-profile-email');
+      const pRut = document.getElementById('settings-profile-rut');
+      const pDept = document.getElementById('settings-profile-dept');
+      if (pName) pName.value = user.name || '';
+      if (pEmail) pEmail.value = user.email || '';
+      if (pRut) pRut.value = (user.rutDni && user.rutDni !== 'Sin DNI') ? user.rutDni : '';
+      if (pDept) pDept.value = user.department || '';
+    } else {
+      const repInput = document.getElementById('pref-input-default-reporter');
+      if (repInput) repInput.value = systemPrefs.defaultReporter || '';
+    }
+  }
+
+  function applySystemPrefs() {
+    const root = document.documentElement;
+    const dark = isDarkActive();
+
+    root.classList.toggle('dark', dark);
+    root.setAttribute('data-accent', systemPrefs.accent || 'blue');
+    root.setAttribute('data-font-scale', systemPrefs.fontScale || 'normal');
+    root.classList.toggle('cc-compact-cards', !!systemPrefs.compactCards);
+    root.classList.toggle('cc-high-contrast', !!systemPrefs.highContrast);
+    root.classList.toggle('cc-reduce-motion', !!systemPrefs.reduceMotion);
+
+    // Actualizar icono rápido en el Header
+    const quickIcon = document.getElementById('icon-quick-theme');
+    if (quickIcon) {
+      quickIcon.textContent = dark ? 'light_mode' : 'dark_mode';
+      quickIcon.className = `material-symbols-outlined text-[18px] ${dark ? 'text-amber-400' : 'text-on-surface'}`;
+    }
+
+    // Actualizar etiqueta e indicadores dentro del modal de Configuración
+    const themeLabel = document.getElementById('settings-current-theme-label');
+    if (themeLabel) {
+      const names = {
+        light: 'Modo Claro',
+        dark: 'Modo Oscuro',
+        system: `Automático (${dark ? 'Oscuro' : 'Claro'})`
+      };
+      themeLabel.textContent = names[systemPrefs.theme] || 'Modo Claro';
+    }
+
+    document.querySelectorAll('.pref-theme-btn').forEach(btn => {
+      const val = btn.getAttribute('data-pref-theme');
+      if (val === systemPrefs.theme) {
+        btn.className = 'pref-theme-btn flex flex-col items-center justify-center gap-1.5 p-3.5 rounded-2xl border-2 border-primary bg-primary/10 shadow-sm transition-all';
+      } else {
+        btn.className = 'pref-theme-btn flex flex-col items-center justify-center gap-1.5 p-3.5 rounded-2xl border-2 border-outline-variant/30 bg-surface-container-low hover:bg-surface-container transition-all';
+      }
+    });
+
+    document.querySelectorAll('.pref-accent-btn').forEach(btn => {
+      const val = btn.getAttribute('data-pref-accent');
+      if (val === systemPrefs.accent) {
+        btn.className = 'pref-accent-btn flex flex-col items-center gap-1.5 p-2.5 rounded-2xl border-2 border-primary bg-primary/10 shadow-sm transition-all';
+      } else {
+        btn.className = 'pref-accent-btn flex flex-col items-center gap-1.5 p-2.5 rounded-2xl border-2 border-outline-variant/30 bg-surface-container-low hover:bg-surface-container transition-all';
+      }
+    });
+
+    document.querySelectorAll('.pref-font-btn').forEach(btn => {
+      const val = btn.getAttribute('data-pref-font');
+      const sizeClass = val === 'sm' ? 'text-[11px]' : (val === 'lg' ? 'text-sm' : (val === 'xl' ? 'text-base' : 'text-xs'));
+      if (val === systemPrefs.fontScale) {
+        btn.className = `pref-font-btn py-2.5 px-2 rounded-xl border-2 border-primary bg-primary text-on-primary font-bold ${sizeClass} shadow-sm transition-all`;
+      } else {
+        btn.className = `pref-font-btn py-2.5 px-2 rounded-xl border-2 border-outline-variant/30 bg-surface-container-low hover:bg-surface-container font-bold ${sizeClass} text-on-surface transition-all`;
+      }
+    });
+
+    const chkCompact = document.getElementById('pref-toggle-compact');
+    if (chkCompact) chkCompact.checked = !!systemPrefs.compactCards;
+
+    const chkContrast = document.getElementById('pref-toggle-contrast');
+    if (chkContrast) chkContrast.checked = !!systemPrefs.highContrast;
+
+    const chkMotion = document.getElementById('pref-toggle-motion');
+    if (chkMotion) chkMotion.checked = !!systemPrefs.reduceMotion;
+
+    const chkToasts = document.getElementById('pref-toggle-toasts');
+    if (chkToasts) chkToasts.checked = systemPrefs.showToasts !== false;
+
+    const chkSound = document.getElementById('pref-toggle-sound');
+    if (chkSound) chkSound.checked = !!systemPrefs.soundAlerts;
+
+    const selSector = document.getElementById('pref-select-default-sector');
+    if (selSector) selSector.value = systemPrefs.defaultSector || 'centro';
+
+    const formSector = document.getElementById('select-sector');
+    if (formSector && systemPrefs.defaultSector) {
+      formSector.value = systemPrefs.defaultSector;
+    }
+
+    const reportedByEl = document.getElementById('input-reportedBy');
+    if (reportedByEl && state.currentUser.role === 'invitado' && systemPrefs.defaultReporter && !reportedByEl.value) {
+      reportedByEl.value = systemPrefs.defaultReporter;
+    }
+
+    const selAutoSync = document.getElementById('pref-select-autosync');
+    if (selAutoSync) selAutoSync.value = String(systemPrefs.autoSyncSec || 0);
+
+    syncSettingsAccountTab();
+    setupAutoSyncTimer();
+  }
+
+  function setupAutoSyncTimer() {
+    if (autoSyncIntervalId) {
+      clearInterval(autoSyncIntervalId);
+      autoSyncIntervalId = null;
+    }
+    const sec = parseInt(systemPrefs.autoSyncSec, 10) || 0;
+    if (sec > 0) {
+      autoSyncIntervalId = setInterval(() => {
+        loadIncidents();
+      }, sec * 1000);
+    }
+  }
+
+  function toggleQuickTheme() {
+    const currentlyDark = isDarkActive();
+    systemPrefs.theme = currentlyDark ? 'light' : 'dark';
+    saveSystemPrefsToStorage();
+    applySystemPrefs();
+    showToast(systemPrefs.theme === 'dark' ? '🌙 Tema Oscuro activado' : '☀️ Tema Claro activado', 'info');
+  }
+
+  function openSystemSettingsModal(initialTab = 'appearance') {
+    const modal = document.getElementById('modal-system-settings');
+    if (!modal) return;
+    applySystemPrefs();
+    const tab = (typeof initialTab === 'string' && initialTab) ? initialTab : 'appearance';
+    switchSettingsTab(tab);
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+  }
+
+  function closeSystemSettingsModal() {
+    const modal = document.getElementById('modal-system-settings');
+    if (!modal) return;
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+  }
+
+  function resetSystemSettings() {
+    systemPrefs = { ...DEFAULT_SYSTEM_PREFS };
+    saveSystemPrefsToStorage();
+    applySystemPrefs();
+    showToast('Configuraciones restablecidas a sus valores de fábrica', 'success');
+  }
+
+  function exportSystemSettings() {
+    try {
+      const blob = new Blob([JSON.stringify(systemPrefs, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'civiccore-ajustes.json';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      showToast('Archivo de ajustes descargado correctamente', 'success');
+    } catch (e) {
+      showToast('No se pudo exportar la configuración', 'error');
+    }
+  }
+
+  async function handleSettingsProfileSubmit(e) {
+    e.preventDefault();
+    if (!state.currentUser || state.currentUser.role === 'invitado') return;
+
+    const name = document.getElementById('settings-profile-name')?.value.trim();
+    const email = document.getElementById('settings-profile-email')?.value.trim();
+    const rutDni = document.getElementById('settings-profile-rut')?.value.trim();
+    const department = document.getElementById('settings-profile-dept')?.value.trim();
+
+    if (!name || !email) {
+      showToast('El nombre y correo electrónico son obligatorios', 'error');
+      return;
+    }
+
+    try {
+      if (state.currentUser.id) {
+        const res = await fetch(`/api/admin/users/${state.currentUser.id}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-user-role': state.currentUser.role,
+            'x-user-name': state.currentUser.name
+          },
+          body: JSON.stringify({
+            name,
+            email,
+            rutDni: rutDni || 'Sin DNI',
+            role: state.currentUser.role,
+            department: department || 'Comunidad'
+          })
+        });
+        if (res.ok) {
+          const json = await res.json();
+          if (json.data) state.currentUser = { ...state.currentUser, ...json.data };
+        }
+      }
+
+      state.currentUser.name = name;
+      state.currentUser.email = email;
+      state.currentUser.rutDni = rutDni || 'Sin DNI';
+      state.currentUser.department = department || 'Comunidad';
+
+      renderNavForRole(state.currentUser.role);
+      syncSettingsAccountTab();
+      showToast('Tus datos de perfil se han actualizado', 'success');
+    } catch (err) {
+      console.error('Error al actualizar perfil:', err);
+      showToast('Error al guardar tus datos de perfil', 'error');
+    }
+  }
+
+  async function handleSettingsPasswordSubmit(e) {
+    e.preventDefault();
+    if (!state.currentUser || state.currentUser.role === 'invitado') {
+      showToast('Debes iniciar sesión para cambiar tu contraseña', 'error');
+      return;
+    }
+
+    const newPwdEl = document.getElementById('settings-new-pwd');
+    const confirmPwdEl = document.getElementById('settings-confirm-pwd');
+    const newPassword = newPwdEl ? newPwdEl.value.trim() : '';
+    const confirmPassword = confirmPwdEl ? confirmPwdEl.value.trim() : '';
+
+    if (newPassword.length < 4) {
+      showToast('La contraseña debe tener al menos 4 caracteres', 'error');
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      showToast('Las contraseñas no coinciden', 'error');
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/auth/change-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-role': state.currentUser.role,
+          'x-user-name': state.currentUser.name,
+          'x-user-email': state.currentUser.email
+        },
+        body: JSON.stringify({ email: state.currentUser.email, newPassword })
+      });
+
+      const json = await res.json();
+      if (!res.ok) {
+        showToast(json.message || 'No se pudo actualizar la contraseña', 'error');
+        return;
+      }
+
+      if (newPwdEl) newPwdEl.value = '';
+      if (confirmPwdEl) confirmPwdEl.value = '';
+      showToast('¡Tu contraseña ha sido actualizada con éxito!', 'success');
+    } catch (err) {
+      console.error('Error al cambiar contraseña desde ajustes:', err);
+      showToast('Error de conexión con el servidor', 'error');
+    }
+  }
+
+  function playAlertTone(type = 'info', force = false) {
+    if (!force && !systemPrefs.soundAlerts) return;
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = type === 'error' ? 320 : (type === 'success' ? 660 : 520);
+      gain.gain.setValueAtTime(0.06, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.16);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.17);
+    } catch (e) {}
+  }
+
+  // ==========================================
   // Toasts / Notificaciones Flotantes
   // ==========================================
   function showToast(message, type = 'info') {
+    playAlertTone(type);
+    if (systemPrefs.showToasts === false) return;
+
     const toast = document.createElement('div');
     const colors = {
       success: 'bg-emerald-600 text-white',
       error: 'bg-red-600 text-white',
-      info: 'bg-primary text-white'
+      info: 'bg-primary text-on-primary'
     };
 
     toast.className = `px-4 py-3 rounded-2xl shadow-xl font-medium text-xs flex items-center gap-2.5 transform transition-all duration-300 translate-y-2 opacity-0 pointer-events-auto border border-white/20 ${colors[type] || colors.info}`;
@@ -2443,6 +2832,186 @@
           .finally(() => {
             setTimeout(() => dom.btnSyncAll.classList.remove('animate-spin'), 600);
           });
+      });
+    }
+
+    // Eventos de Tema Rápido y Modal de Configuraciones del Sistema
+    const btnQuickTheme = document.getElementById('btn-quick-theme-toggle');
+    if (btnQuickTheme) {
+      btnQuickTheme.addEventListener('click', toggleQuickTheme);
+    }
+
+    const btnOpenSysSettings = document.getElementById('btn-open-system-settings');
+    if (btnOpenSysSettings) {
+      btnOpenSysSettings.addEventListener('click', () => openSystemSettingsModal('appearance'));
+    }
+
+    const btnCloseSysSettings = document.getElementById('btn-close-system-settings');
+    if (btnCloseSysSettings) {
+      btnCloseSysSettings.addEventListener('click', closeSystemSettingsModal);
+    }
+
+    const btnSaveCloseSysSettings = document.getElementById('btn-save-close-system-settings');
+    if (btnSaveCloseSysSettings) {
+      btnSaveCloseSysSettings.addEventListener('click', () => {
+        closeSystemSettingsModal();
+        showToast('Configuraciones guardadas y aplicadas', 'success');
+      });
+    }
+
+    const btnResetSysSettings = document.getElementById('btn-reset-system-settings');
+    if (btnResetSysSettings) {
+      btnResetSysSettings.addEventListener('click', resetSystemSettings);
+    }
+
+    const btnExportPrefs = document.getElementById('btn-export-system-prefs');
+    if (btnExportPrefs) {
+      btnExportPrefs.addEventListener('click', exportSystemSettings);
+    }
+
+    const modalSysSettings = document.getElementById('modal-system-settings');
+    if (modalSysSettings) {
+      modalSysSettings.addEventListener('click', (e) => {
+        if (e.target === modalSysSettings) closeSystemSettingsModal();
+      });
+    }
+
+    document.querySelectorAll('.settings-tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const tab = btn.getAttribute('data-settings-tab');
+        if (tab) switchSettingsTab(tab);
+      });
+    });
+
+    const formSettingsProfile = document.getElementById('form-settings-profile');
+    if (formSettingsProfile) {
+      formSettingsProfile.addEventListener('submit', handleSettingsProfileSubmit);
+    }
+
+    const formSettingsPwd = document.getElementById('form-settings-password');
+    if (formSettingsPwd) {
+      formSettingsPwd.addEventListener('submit', handleSettingsPasswordSubmit);
+    }
+
+    const btnToggleSettingsPwd = document.getElementById('btn-toggle-settings-pwd');
+    if (btnToggleSettingsPwd) {
+      btnToggleSettingsPwd.addEventListener('click', () => {
+        const input = document.getElementById('settings-new-pwd');
+        if (input) {
+          input.setAttribute('type', input.getAttribute('type') === 'password' ? 'text' : 'password');
+        }
+      });
+    }
+
+    const btnSaveDefaultReporter = document.getElementById('btn-save-default-reporter');
+    if (btnSaveDefaultReporter) {
+      btnSaveDefaultReporter.addEventListener('click', () => {
+        const val = document.getElementById('pref-input-default-reporter')?.value.trim() || '';
+        systemPrefs.defaultReporter = val;
+        saveSystemPrefsToStorage();
+        applySystemPrefs();
+        showToast(val ? `Alias "${val}" guardado para tus reportes` : 'Alias predeterminado borrado', 'success');
+      });
+    }
+
+    document.querySelectorAll('.pref-theme-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        systemPrefs.theme = btn.getAttribute('data-pref-theme') || 'light';
+        saveSystemPrefsToStorage();
+        applySystemPrefs();
+      });
+    });
+
+    document.querySelectorAll('.pref-accent-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        systemPrefs.accent = btn.getAttribute('data-pref-accent') || 'blue';
+        saveSystemPrefsToStorage();
+        applySystemPrefs();
+      });
+    });
+
+    document.querySelectorAll('.pref-font-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        systemPrefs.fontScale = btn.getAttribute('data-pref-font') || 'normal';
+        saveSystemPrefsToStorage();
+        applySystemPrefs();
+      });
+    });
+
+    const chkCompact = document.getElementById('pref-toggle-compact');
+    if (chkCompact) {
+      chkCompact.addEventListener('change', (e) => {
+        systemPrefs.compactCards = e.target.checked;
+        saveSystemPrefsToStorage();
+        applySystemPrefs();
+      });
+    }
+
+    const chkContrast = document.getElementById('pref-toggle-contrast');
+    if (chkContrast) {
+      chkContrast.addEventListener('change', (e) => {
+        systemPrefs.highContrast = e.target.checked;
+        saveSystemPrefsToStorage();
+        applySystemPrefs();
+      });
+    }
+
+    const chkMotion = document.getElementById('pref-toggle-motion');
+    if (chkMotion) {
+      chkMotion.addEventListener('change', (e) => {
+        systemPrefs.reduceMotion = e.target.checked;
+        saveSystemPrefsToStorage();
+        applySystemPrefs();
+      });
+    }
+
+    const chkToasts = document.getElementById('pref-toggle-toasts');
+    if (chkToasts) {
+      chkToasts.addEventListener('change', (e) => {
+        systemPrefs.showToasts = e.target.checked;
+        saveSystemPrefsToStorage();
+        applySystemPrefs();
+      });
+    }
+
+    const chkSound = document.getElementById('pref-toggle-sound');
+    if (chkSound) {
+      chkSound.addEventListener('change', (e) => {
+        systemPrefs.soundAlerts = e.target.checked;
+        saveSystemPrefsToStorage();
+        applySystemPrefs();
+        if (systemPrefs.soundAlerts) playAlertTone('success', true);
+      });
+    }
+
+    const btnTestSound = document.getElementById('btn-test-alert-sound');
+    if (btnTestSound) {
+      btnTestSound.addEventListener('click', () => {
+        playAlertTone('success', true);
+      });
+    }
+
+    const selDefaultSector = document.getElementById('pref-select-default-sector');
+    if (selDefaultSector) {
+      selDefaultSector.addEventListener('change', (e) => {
+        systemPrefs.defaultSector = e.target.value;
+        saveSystemPrefsToStorage();
+        applySystemPrefs();
+      });
+    }
+
+    const selAutoSync = document.getElementById('pref-select-autosync');
+    if (selAutoSync) {
+      selAutoSync.addEventListener('change', (e) => {
+        systemPrefs.autoSyncSec = parseInt(e.target.value, 10) || 0;
+        saveSystemPrefsToStorage();
+        applySystemPrefs();
+      });
+    }
+
+    if (window.matchMedia) {
+      window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+        if (systemPrefs.theme === 'system') applySystemPrefs();
       });
     }
 
@@ -2585,6 +3154,7 @@
         closeIncidentModal();
         closeReportSuccessModal();
         closeChangePasswordModal();
+        closeSystemSettingsModal();
       }
     });
 
@@ -2614,11 +3184,9 @@
 
     if (dom.currentUserBadge) {
       dom.currentUserBadge.classList.add('cursor-pointer');
-      dom.currentUserBadge.setAttribute('title', 'Clic para cambiar tu contraseña');
+      dom.currentUserBadge.setAttribute('title', 'Clic para abrir tu cuenta y cambiar tu contraseña');
       dom.currentUserBadge.addEventListener('click', () => {
-        if (state.currentUser && state.currentUser.role !== 'invitado') {
-          openChangeMyPasswordModal();
-        }
+        openSystemSettingsModal('account');
       });
     }
 
@@ -2764,6 +3332,9 @@
     openChangePasswordForUser,
     openChangeMyPasswordModal,
     closeChangePasswordModal,
+    openSystemSettingsModal,
+    closeSystemSettingsModal,
+    toggleQuickTheme,
     removeCustomPhoto,
     trackFolioNumber: (id) => handleFolioTracking(id),
     state
@@ -2773,6 +3344,7 @@
   // Inicio de la Aplicación
   // ==========================================
   function init() {
+    applySystemPrefs();
     initEvents();
     renderNavForRole(state.currentUser.role);
     switchView(ROLE_PERMISSIONS[state.currentUser.role].defaultView);

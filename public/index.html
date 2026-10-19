@@ -15,51 +15,51 @@
   <script src="https://cdn.tailwindcss.com"></script>
   
   
-  <!-- Configuración del Design System de CivicCore -->
+  <!-- Configuración del Design System de CivicCore (Variables Dinámicas para Temas y Modo Oscuro) -->
   <script id="tailwind-config">
     tailwind.config = {
       darkMode: "class",
       theme: {
         extend: {
           colors: {
-            "primary": "#00288e",
-            "primary-container": "#1e40af",
-            "on-primary": "#ffffff",
-            "on-primary-container": "#a8b8ff",
-            "primary-fixed": "#dde1ff",
-            "primary-fixed-dim": "#b8c4ff",
-            "secondary": "#4f5c8e",
-            "secondary-container": "#b7c4fd",
-            "on-secondary": "#ffffff",
-            "on-secondary-container": "#435081",
-            "secondary-fixed": "#dce1ff",
-            "secondary-fixed-dim": "#b7c4fd",
-            "tertiary": "#003d28",
-            "tertiary-container": "#00563a",
-            "on-tertiary": "#ffffff",
-            "on-tertiary-container": "#5bcf9e",
-            "tertiary-fixed": "#85f8c4",
-            "tertiary-fixed-dim": "#68dba9",
-            "error": "#ba1a1a",
-            "error-container": "#ffdad6",
-            "on-error": "#ffffff",
-            "on-error-container": "#93000a",
-            "surface": "#f8f9ff",
-            "surface-dim": "#cbdbf5",
-            "surface-bright": "#f8f9ff",
-            "surface-container-lowest": "#ffffff",
-            "surface-container-low": "#eff4ff",
-            "surface-container": "#e5eeff",
-            "surface-container-high": "#dce9ff",
-            "surface-container-highest": "#d3e4fe",
-            "surface-variant": "#d3e4fe",
-            "surface-tint": "#3755c3",
-            "on-surface": "#0b1c30",
-            "on-surface-variant": "#444653",
-            "inverse-surface": "#213145",
-            "inverse-on-surface": "#eaf1ff",
-            "outline": "#757684",
-            "outline-variant": "#c4c5d5"
+            "primary": "rgb(var(--cc-primary) / <alpha-value>)",
+            "primary-container": "rgb(var(--cc-primary-container) / <alpha-value>)",
+            "on-primary": "rgb(var(--cc-on-primary) / <alpha-value>)",
+            "on-primary-container": "rgb(var(--cc-on-primary-container) / <alpha-value>)",
+            "primary-fixed": "rgb(var(--cc-primary-fixed) / <alpha-value>)",
+            "primary-fixed-dim": "rgb(var(--cc-primary-fixed-dim) / <alpha-value>)",
+            "secondary": "rgb(var(--cc-secondary) / <alpha-value>)",
+            "secondary-container": "rgb(var(--cc-secondary-container) / <alpha-value>)",
+            "on-secondary": "rgb(var(--cc-on-secondary) / <alpha-value>)",
+            "on-secondary-container": "rgb(var(--cc-on-secondary-container) / <alpha-value>)",
+            "secondary-fixed": "rgb(var(--cc-secondary-fixed) / <alpha-value>)",
+            "secondary-fixed-dim": "rgb(var(--cc-secondary-fixed-dim) / <alpha-value>)",
+            "tertiary": "rgb(var(--cc-tertiary) / <alpha-value>)",
+            "tertiary-container": "rgb(var(--cc-tertiary-container) / <alpha-value>)",
+            "on-tertiary": "rgb(var(--cc-on-tertiary) / <alpha-value>)",
+            "on-tertiary-container": "rgb(var(--cc-on-tertiary-container) / <alpha-value>)",
+            "tertiary-fixed": "rgb(var(--cc-tertiary-fixed) / <alpha-value>)",
+            "tertiary-fixed-dim": "rgb(var(--cc-tertiary-fixed-dim) / <alpha-value>)",
+            "error": "rgb(var(--cc-error) / <alpha-value>)",
+            "error-container": "rgb(var(--cc-error-container) / <alpha-value>)",
+            "on-error": "rgb(var(--cc-on-error) / <alpha-value>)",
+            "on-error-container": "rgb(var(--cc-on-error-container) / <alpha-value>)",
+            "surface": "rgb(var(--cc-surface) / <alpha-value>)",
+            "surface-dim": "rgb(var(--cc-surface-dim) / <alpha-value>)",
+            "surface-bright": "rgb(var(--cc-surface-bright) / <alpha-value>)",
+            "surface-container-lowest": "rgb(var(--cc-surface-container-lowest) / <alpha-value>)",
+            "surface-container-low": "rgb(var(--cc-surface-container-low) / <alpha-value>)",
+            "surface-container": "rgb(var(--cc-surface-container) / <alpha-value>)",
+            "surface-container-high": "rgb(var(--cc-surface-container-high) / <alpha-value>)",
+            "surface-container-highest": "rgb(var(--cc-surface-container-highest) / <alpha-value>)",
+            "surface-variant": "rgb(var(--cc-surface-variant) / <alpha-value>)",
+            "surface-tint": "rgb(var(--cc-surface-tint) / <alpha-value>)",
+            "on-surface": "rgb(var(--cc-on-surface) / <alpha-value>)",
+            "on-surface-variant": "rgb(var(--cc-on-surface-variant) / <alpha-value>)",
+            "inverse-surface": "rgb(var(--cc-inverse-surface) / <alpha-value>)",
+            "inverse-on-surface": "rgb(var(--cc-inverse-on-surface) / <alpha-value>)",
+            "outline": "rgb(var(--cc-outline) / <alpha-value>)",
+            "outline-variant": "rgb(var(--cc-outline-variant) / <alpha-value>)"
           },
           fontFamily: {
             sans: ['Inter', 'sans-serif']
@@ -70,17 +70,35 @@
   </script>
 
   <link rel="stylesheet" href="/css/civiccore.css">
-</head>
-<body class="bg-surface font-sans text-on-surface min-h-screen flex flex-col antialiased selection:bg-primary-fixed selection:text-primary overflow-x-hidden">
 
-  <div class="flex-1 flex flex-col lg:flex-row min-h-screen">
+  <!-- Inicialización temprana de Tema y Preferencias para evitar parpadeos -->
+  <script>
+    (function() {
+      try {
+        const saved = JSON.parse(localStorage.getItem('civiccore_system_prefs') || '{}');
+        const root = document.documentElement;
+        const theme = saved.theme || 'light';
+        const isDark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+        root.classList.toggle('dark', isDark);
+        root.setAttribute('data-accent', saved.accent || 'blue');
+        root.setAttribute('data-font-scale', saved.fontScale || 'normal');
+        root.classList.toggle('cc-high-contrast', !!saved.highContrast);
+        root.classList.toggle('cc-reduce-motion', !!saved.reduceMotion);
+        root.classList.toggle('cc-compact-cards', !!saved.compactCards);
+      } catch (e) {}
+    })();
+  </script>
+</head>
+<body class="bg-surface font-sans text-on-surface h-screen overflow-hidden flex flex-col antialiased selection:bg-primary-fixed selection:text-primary">
+
+  <div class="flex-1 flex flex-col lg:flex-row h-full overflow-hidden">
     
     <!-- ============================================================== -->
     <!-- SIDEBAR DE ESCRITORIO (Visible para usuarios autenticados) -->
     <!-- ============================================================== -->
-    <aside id="sidebar-desktop" class="hidden lg:flex flex-col w-72 bg-surface-container-low border-r border-outline-variant/30 shrink-0 sticky top-0 h-screen z-40">
+    <aside id="sidebar-desktop" class="hidden lg:flex flex-col w-72 bg-surface-container-low border-r border-outline-variant/30 shrink-0 h-full z-40">
       <!-- Marca Municipal y Logo -->
-      <div class="h-16 px-6 flex items-center justify-between border-b border-outline-variant/20">
+      <div class="h-16 px-6 flex items-center justify-between border-b border-outline-variant/20 shrink-0">
         <div class="flex items-center gap-3">
           <div class="w-9 h-9 rounded-xl bg-primary text-on-primary flex items-center justify-center shadow-md">
             <span class="material-symbols-outlined text-[20px]">account_balance</span>
@@ -93,7 +111,7 @@
       </div>
 
       <!-- Botón Destacado Nueva Incidencia (Disponible para Invitado, Vecino y Funcionario) -->
-      <div class="p-4 pb-2" id="sidebar-action-container">
+      <div class="p-4 pb-2 shrink-0" id="sidebar-action-container">
         <button id="btn-sidebar-nuevo" class="w-full flex items-center justify-center gap-2 py-3 px-4 bg-primary text-on-primary rounded-xl font-semibold shadow-md hover:bg-primary-container active:scale-[0.98] transition-all">
           <span class="material-symbols-outlined text-[20px]">add_circle</span>
           <span id="btn-sidebar-nuevo-text">Generar Reporte</span>
@@ -106,7 +124,7 @@
       </nav>
 
       <!-- Perfil Activo en Barra Lateral -->
-      <div class="p-4 border-t border-outline-variant/20 bg-surface-container-lowest/60 space-y-2">
+      <div class="p-4 border-t border-outline-variant/20 bg-surface-container-lowest/60 space-y-2 shrink-0">
         <div class="flex items-center gap-2.5 p-2 rounded-xl bg-surface-container-low border border-outline-variant/20">
           <div class="w-8 h-8 rounded-full bg-primary text-on-primary flex items-center justify-center shrink-0">
             <span class="material-symbols-outlined text-[18px]" id="sidebar-avatar-icon">person</span>
@@ -116,20 +134,26 @@
             <span id="sidebar-user-role" class="text-[10px] text-outline truncate">Invitado (Reporte Anónimo)</span>
           </div>
         </div>
-        <button id="sidebar-btn-change-password" onclick="window.civicApp.openChangeMyPasswordModal()" class="hidden w-full py-1.5 px-2.5 rounded-xl bg-surface-container hover:bg-surface-container-high text-on-surface text-[11px] font-semibold flex items-center justify-center gap-1.5 transition-all shadow-sm">
-          <span class="material-symbols-outlined text-[15px] text-primary">key</span>
-          <span>Cambiar mi contraseña</span>
-        </button>
+        <div class="grid grid-cols-2 gap-1.5">
+          <button id="sidebar-btn-change-password" onclick="window.civicApp.openChangeMyPasswordModal()" class="hidden py-1.5 px-2 rounded-xl bg-surface-container hover:bg-surface-container-high text-on-surface text-[11px] font-semibold flex items-center justify-center gap-1 transition-all shadow-sm">
+            <span class="material-symbols-outlined text-[15px] text-primary">key</span>
+            <span class="truncate">Mi Clave</span>
+          </button>
+          <button onclick="window.civicApp.openSystemSettingsModal()" class="col-span-full py-1.5 px-2.5 rounded-xl bg-surface-container hover:bg-surface-container-high text-on-surface text-[11px] font-semibold flex items-center justify-center gap-1.5 transition-all shadow-sm" id="sidebar-btn-system-settings">
+            <span class="material-symbols-outlined text-[15px] text-primary">tune</span>
+            <span>Ajustes y Tema</span>
+          </button>
+        </div>
       </div>
     </aside>
 
     <!-- ============================================================== -->
     <!-- ÁREA PRINCIPAL DE CONTENIDO (Móvil y Escritorio) -->
     <!-- ============================================================== -->
-    <div class="flex-1 flex flex-col min-w-0">
+    <div class="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
       
-      <!-- Topbar Header -->
-      <header class="sticky top-0 z-30 w-full bg-surface/90 backdrop-blur-xl border-b border-outline-variant/20 shadow-sm">
+      <!-- Topbar Header (Fijo arriba, no se desplaza) -->
+      <header class="shrink-0 z-30 w-full bg-surface/90 backdrop-blur-xl border-b border-outline-variant/20 shadow-sm">
         <div class="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 h-14 flex items-center justify-between gap-2 sm:gap-4">
           
           <!-- Lado Izquierdo: Título de Vista -->
@@ -147,10 +171,10 @@
             </div>
           </div>
 
-          <!-- Lado Derecho: Estado, Usuario & Acceso -->
-          <div class="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
-            <span id="system-badge-live" class="hidden md:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-tertiary-fixed text-on-tertiary-fixed">
-              <span class="w-1.5 h-1.5 rounded-full bg-tertiary animate-pulse"></span>
+          <!-- Lado Derecho: Estado, Usuario, Tema & Configuración -->
+          <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
+            <span id="system-badge-live" class="hidden md:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-tertiary-fixed text-on-tertiary">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
               <span>Online</span>
             </span>
 
@@ -167,6 +191,16 @@
               <span id="btn-auth-text">Iniciar Sesión</span>
             </button>
 
+            <!-- Botón Rápido Alternar Modo Claro / Oscuro -->
+            <button id="btn-quick-theme-toggle" title="Cambiar entre Modo Claro y Oscuro" class="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-xl bg-surface-container-high hover:bg-surface-variant text-on-surface active:scale-95 transition-all shrink-0">
+              <span id="icon-quick-theme" class="material-symbols-outlined text-[18px]">dark_mode</span>
+            </button>
+
+            <!-- Botón Abrir Configuraciones del Sistema -->
+            <button id="btn-open-system-settings" title="Configuración del Sistema y Apariencia" class="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-xl bg-surface-container-high hover:bg-surface-variant text-primary active:scale-95 transition-all shrink-0">
+              <span class="material-symbols-outlined text-[18px]">settings</span>
+            </button>
+
             <button id="btn-sync-all" title="Sincronizar datos" class="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-xl bg-surface-container-high hover:bg-surface-variant text-primary active:scale-95 transition-all shrink-0">
               <span class="material-symbols-outlined text-[18px]">sync</span>
             </button>
@@ -176,10 +210,11 @@
       </header>
 
       <!-- Banner informativo de Nivel (Oculto) -->
-      <div id="role-info-banner" class="hidden"></div>
+      <div id="role-info-banner" class="hidden shrink-0"></div>
 
-      <!-- Contenedor Dinámico de Vistas -->
-      <main class="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-4 lg:p-8 pb-28 lg:pb-12">
+      <!-- Contenedor Dinámico de Vistas (Único contenedor con scroll vertical) -->
+      <div id="main-scroll-container" class="flex-1 overflow-y-auto overflow-x-hidden">
+      <main class="max-w-7xl w-full mx-auto p-3 sm:p-4 lg:p-8 pb-28 lg:pb-12">
         
         <!-- ============================================================== -->
         <!-- VISTA NIVEL 1 / UNIVERSAL: FORMULARIO GENERAR REPORTE -->
@@ -1030,7 +1065,7 @@
               </span>
             </div>
 
-            <div class="space-y-3" id="admin-critical-alerts-container">
+            <div class="space-y-3 max-h-96 overflow-y-auto pr-1" id="admin-critical-alerts-container">
               <!-- Renderizado de alertas críticas en vivo -->
             </div>
           </div>
@@ -1340,6 +1375,7 @@
         </section>
 
       </main>
+      </div>
 
     </div>
 
@@ -1793,6 +1829,435 @@
         <div id="dropdown-status-subtitle" class="text-[10px] text-outline">Inhabilitar temporalmente</div>
       </div>
     </button>
+  </div>
+
+  <!-- ============================================================== -->
+  <!-- MODAL CENTRO DE CONFIGURACIÓN DEL SISTEMA, CUENTA Y APARIENCIA -->
+  <!-- ============================================================== -->
+  <div id="modal-system-settings" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-3 sm:p-4">
+    <div class="bg-surface-container-lowest rounded-3xl max-w-2xl w-full max-h-[92dvh] flex flex-col overflow-hidden shadow-2xl border border-outline-variant/30 animate-scale-up">
+      
+      <!-- Cabecera del Modal -->
+      <div class="p-4 sm:p-6 pb-3.5 border-b border-outline-variant/20 flex items-center justify-between gap-3 shrink-0 bg-surface-container-low/50">
+        <div class="flex items-center gap-3 min-w-0">
+          <div class="w-10 h-10 rounded-xl bg-primary text-on-primary flex items-center justify-center shadow-md shrink-0">
+            <span class="material-symbols-outlined text-[22px]">settings</span>
+          </div>
+          <div class="min-w-0">
+            <span class="text-[10px] font-bold text-primary uppercase tracking-wider block leading-none">Preferencias, Seguridad & Tema</span>
+            <h3 class="text-base sm:text-lg font-bold text-on-surface leading-tight truncate mt-0.5">Configuración del Sistema</h3>
+          </div>
+        </div>
+        <button id="btn-close-system-settings" type="button" class="w-8 h-8 rounded-full bg-surface-container text-on-surface-variant flex items-center justify-center hover:bg-surface-container-high transition-all shrink-0">
+          <span class="material-symbols-outlined text-[18px]">close</span>
+        </button>
+      </div>
+
+      <!-- Barra de Pestañas (Tabs) de Configuración -->
+      <div class="px-4 sm:px-6 pt-2.5 pb-2 border-b border-outline-variant/20 bg-surface-container-low/30 flex items-center gap-1.5 overflow-x-auto no-scrollbar shrink-0">
+        <button type="button" data-settings-tab="appearance" class="settings-tab-btn active shrink-0 px-3.5 py-2 rounded-xl font-bold text-xs flex items-center gap-1.5 bg-primary text-on-primary shadow-sm transition-all">
+          <span class="material-symbols-outlined text-[16px]">palette</span>
+          <span>Apariencia y Tema</span>
+        </button>
+        <button type="button" data-settings-tab="account" class="settings-tab-btn shrink-0 px-3.5 py-2 rounded-xl font-semibold text-xs flex items-center gap-1.5 text-on-surface-variant hover:bg-surface-container transition-all">
+          <span class="material-symbols-outlined text-[16px]">manage_accounts</span>
+          <span>Cuenta y Contraseña</span>
+        </button>
+        <button type="button" data-settings-tab="preferences" class="settings-tab-btn shrink-0 px-3.5 py-2 rounded-xl font-semibold text-xs flex items-center gap-1.5 text-on-surface-variant hover:bg-surface-container transition-all">
+          <span class="material-symbols-outlined text-[16px]">notifications</span>
+          <span>Alertas y Operación</span>
+        </button>
+        <button type="button" data-settings-tab="accessibility" class="settings-tab-btn shrink-0 px-3.5 py-2 rounded-xl font-semibold text-xs flex items-center gap-1.5 text-on-surface-variant hover:bg-surface-container transition-all">
+          <span class="material-symbols-outlined text-[16px]">accessibility_new</span>
+          <span>Accesibilidad y Datos</span>
+        </button>
+      </div>
+
+      <!-- Cuerpo de Opciones (Scrollable) -->
+      <div class="p-4 sm:p-6 overflow-y-auto overscroll-contain text-xs flex-1 space-y-6">
+
+        <!-- ========================================================== -->
+        <!-- PESTAÑA 1: APARIENCIA Y TEMA                               -->
+        <!-- ========================================================== -->
+        <div id="settings-panel-appearance" class="settings-tab-panel space-y-6">
+          
+          <!-- 1. MODO DE TEMA (CLARO / OSCURO / SISTEMA) -->
+          <div class="space-y-2.5">
+            <div class="flex items-center justify-between">
+              <label class="font-bold text-sm text-on-surface flex items-center gap-2">
+                <span class="material-symbols-outlined text-[18px] text-primary">contrast</span>
+                <span>Modo de Tema</span>
+              </label>
+              <span id="settings-current-theme-label" class="text-[11px] font-semibold text-primary bg-primary/10 px-2.5 py-0.5 rounded-full">Modo Claro</span>
+            </div>
+            <p class="text-[11px] text-outline">Cambia entre el tema claro diurno, tema oscuro nocturno o sincronízalo automáticamente con tu dispositivo.</p>
+
+            <div class="grid grid-cols-3 gap-2.5 pt-1">
+              <button type="button" data-pref-theme="light" class="pref-theme-btn flex flex-col items-center justify-center gap-1.5 p-3.5 rounded-2xl border-2 border-outline-variant/30 bg-surface-container-low hover:bg-surface-container transition-all">
+                <span class="material-symbols-outlined text-[24px] text-amber-500">light_mode</span>
+                <span class="font-bold text-on-surface">Claro</span>
+              </button>
+
+              <button type="button" data-pref-theme="dark" class="pref-theme-btn flex flex-col items-center justify-center gap-1.5 p-3.5 rounded-2xl border-2 border-outline-variant/30 bg-surface-container-low hover:bg-surface-container transition-all">
+                <span class="material-symbols-outlined text-[24px] text-indigo-400">dark_mode</span>
+                <span class="font-bold text-on-surface">Oscuro</span>
+              </button>
+
+              <button type="button" data-pref-theme="system" class="pref-theme-btn flex flex-col items-center justify-center gap-1.5 p-3.5 rounded-2xl border-2 border-outline-variant/30 bg-surface-container-low hover:bg-surface-container transition-all">
+                <span class="material-symbols-outlined text-[24px] text-primary">devices</span>
+                <span class="font-bold text-on-surface">Automático</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- 2. PALETA DE COLOR DE ACENTO -->
+          <div class="space-y-2.5 pt-4 border-t border-outline-variant/20">
+            <label class="font-bold text-sm text-on-surface flex items-center gap-2">
+              <span class="material-symbols-outlined text-[18px] text-primary">palette</span>
+              <span>Color Principal del Sistema</span>
+            </label>
+            <p class="text-[11px] text-outline">Personaliza el color institucional de botones, menús activos y encabezados.</p>
+
+            <div class="grid grid-cols-5 gap-2 pt-1">
+              <button type="button" data-pref-accent="blue" class="pref-accent-btn flex flex-col items-center gap-1.5 p-2.5 rounded-2xl border-2 border-outline-variant/30 bg-surface-container-low hover:bg-surface-container transition-all">
+                <span class="w-6 h-6 rounded-full bg-[#1e40af] shadow-sm ring-2 ring-white/40"></span>
+                <span class="text-[10px] font-bold text-on-surface">Azul</span>
+              </button>
+
+              <button type="button" data-pref-accent="emerald" class="pref-accent-btn flex flex-col items-center gap-1.5 p-2.5 rounded-2xl border-2 border-outline-variant/30 bg-surface-container-low hover:bg-surface-container transition-all">
+                <span class="w-6 h-6 rounded-full bg-[#047857] shadow-sm ring-2 ring-white/40"></span>
+                <span class="text-[10px] font-bold text-on-surface">Esmeralda</span>
+              </button>
+
+              <button type="button" data-pref-accent="indigo" class="pref-accent-btn flex flex-col items-center gap-1.5 p-2.5 rounded-2xl border-2 border-outline-variant/30 bg-surface-container-low hover:bg-surface-container transition-all">
+                <span class="w-6 h-6 rounded-full bg-[#4f46e5] shadow-sm ring-2 ring-white/40"></span>
+                <span class="text-[10px] font-bold text-on-surface">Índigo</span>
+              </button>
+
+              <button type="button" data-pref-accent="amber" class="pref-accent-btn flex flex-col items-center gap-1.5 p-2.5 rounded-2xl border-2 border-outline-variant/30 bg-surface-container-low hover:bg-surface-container transition-all">
+                <span class="w-6 h-6 rounded-full bg-[#b45309] shadow-sm ring-2 ring-white/40"></span>
+                <span class="text-[10px] font-bold text-on-surface">Ámbar</span>
+              </button>
+
+              <button type="button" data-pref-accent="slate" class="pref-accent-btn flex flex-col items-center gap-1.5 p-2.5 rounded-2xl border-2 border-outline-variant/30 bg-surface-container-low hover:bg-surface-container transition-all">
+                <span class="w-6 h-6 rounded-full bg-[#334155] shadow-sm ring-2 ring-white/40"></span>
+                <span class="text-[10px] font-bold text-on-surface">Grafito</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- 3. TAMAÑO DE TEXTO / ESCALA DE INTERFAZ -->
+          <div class="space-y-2.5 pt-4 border-t border-outline-variant/20">
+            <label class="font-bold text-sm text-on-surface flex items-center gap-2">
+              <span class="material-symbols-outlined text-[18px] text-primary">format_size</span>
+              <span>Tamaño de Fuente y Lectura</span>
+            </label>
+            <div class="grid grid-cols-4 gap-2 pt-1">
+              <button type="button" data-pref-font="sm" class="pref-font-btn py-2.5 px-2 rounded-xl border-2 border-outline-variant/30 bg-surface-container-low hover:bg-surface-container font-bold text-[11px] text-on-surface transition-all">
+                Compacto
+              </button>
+              <button type="button" data-pref-font="normal" class="pref-font-btn py-2.5 px-2 rounded-xl border-2 border-outline-variant/30 bg-surface-container-low hover:bg-surface-container font-bold text-xs text-on-surface transition-all">
+                Normal
+              </button>
+              <button type="button" data-pref-font="lg" class="pref-font-btn py-2.5 px-2 rounded-xl border-2 border-outline-variant/30 bg-surface-container-low hover:bg-surface-container font-bold text-sm text-on-surface transition-all">
+                Grande
+              </button>
+              <button type="button" data-pref-font="xl" class="pref-font-btn py-2.5 px-2 rounded-xl border-2 border-outline-variant/30 bg-surface-container-low hover:bg-surface-container font-bold text-base text-on-surface transition-all">
+                Extra
+              </button>
+            </div>
+          </div>
+
+          <!-- Switch: Vista Compacta -->
+          <div class="pt-2">
+            <label class="flex items-center justify-between gap-3 p-3.5 rounded-2xl bg-surface-container-low border border-outline-variant/20 cursor-pointer hover:bg-surface-container transition-all">
+              <div class="flex items-center gap-2.5">
+                <span class="material-symbols-outlined text-[20px] text-primary">view_compact</span>
+                <div>
+                  <span class="font-bold text-on-surface block">Densidad Compacta en Tarjetas</span>
+                  <span class="text-[11px] text-outline">Reduce márgenes internos en la bandeja de reportes para mostrar más contenido</span>
+                </div>
+              </div>
+              <input type="checkbox" id="pref-toggle-compact" class="w-4 h-4 accent-primary rounded cursor-pointer shrink-0">
+            </label>
+          </div>
+        </div>
+
+        <!-- ========================================================== -->
+        <!-- PESTAÑA 2: CUENTA, PERFIL Y CAMBIO DE CONTRASEÑA           -->
+        <!-- ========================================================== -->
+        <div id="settings-panel-account" class="settings-tab-panel hidden space-y-5">
+          
+          <!-- Resumen de Sesión Actual -->
+          <div class="p-4 rounded-2xl bg-surface-container-low border border-outline-variant/20 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div class="flex items-center gap-3 min-w-0">
+              <div class="w-11 h-11 rounded-2xl bg-primary text-on-primary flex items-center justify-center shadow-sm shrink-0">
+                <span id="settings-account-avatar-icon" class="material-symbols-outlined text-[24px]">person</span>
+              </div>
+              <div class="min-w-0">
+                <div class="flex items-center gap-2 flex-wrap">
+                  <span id="settings-account-name" class="font-bold text-sm text-on-surface truncate">Vecino Invitado</span>
+                  <span id="settings-account-role-badge" class="px-2 py-0.5 rounded-full bg-primary/10 text-primary font-bold text-[10px] uppercase">Invitado</span>
+                </div>
+                <span id="settings-account-email" class="text-[11px] text-outline block truncate mt-0.5">Modo público sin sesión iniciada</span>
+              </div>
+            </div>
+            <div id="settings-account-guest-actions">
+              <button type="button" onclick="window.civicApp.closeSystemSettingsModal(); window.civicApp.openAuthModal();" class="px-3.5 py-2 rounded-xl bg-primary text-on-primary font-bold text-xs flex items-center gap-1.5 shadow-sm hover:bg-primary-container transition-all">
+                <span class="material-symbols-outlined text-[16px]">login</span>
+                <span>Iniciar Sesión</span>
+              </button>
+            </div>
+            <div id="settings-account-auth-actions" class="hidden">
+              <button type="button" onclick="window.civicApp.closeSystemSettingsModal(); window.civicApp.logout();" class="px-3.5 py-2 rounded-xl bg-error-container text-on-error-container font-bold text-xs flex items-center gap-1.5 hover:bg-error hover:text-on-error transition-all">
+                <span class="material-symbols-outlined text-[16px]">logout</span>
+                <span>Cerrar Sesión</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Bloque para Invitado (Cuando no ha iniciado sesión) -->
+          <div id="settings-guest-profile-block" class="p-4 rounded-2xl bg-surface-container-lowest border border-outline-variant/20 space-y-3">
+            <div class="flex items-center gap-2">
+              <span class="material-symbols-outlined text-primary text-[18px]">badge</span>
+              <h4 class="font-bold text-sm text-on-surface">Firma Predeterminada para Reportes Rápidos</h4>
+            </div>
+            <p class="text-[11px] text-outline">Si reportas como invitado, puedes guardar tu nombre o alias para que se rellene automáticamente en el formulario. Para cambiar contraseña o editar tu perfil oficial, inicia sesión.</p>
+            <div class="flex flex-col sm:flex-row gap-2">
+              <input type="text" id="pref-input-default-reporter" placeholder="Ej: Juan Pérez (Junta Vecinal)" class="flex-1 h-10 px-3.5 rounded-xl bg-surface-container-low text-on-surface text-xs border border-outline-variant/30 focus:border-primary">
+              <button type="button" id="btn-save-default-reporter" class="h-10 px-4 rounded-xl bg-primary text-on-primary font-bold text-xs hover:bg-primary-container transition-all shrink-0">
+                Guardar Alias
+              </button>
+            </div>
+          </div>
+
+          <!-- Bloque para Usuarios Autenticados: Editar Perfil + Cambiar Contraseña -->
+          <div id="settings-authenticated-profile-block" class="hidden space-y-5">
+            
+            <!-- 1. Editar Datos de Mi Perfil -->
+            <form id="form-settings-profile" class="p-4 rounded-2xl bg-surface-container-lowest border border-outline-variant/20 space-y-3.5">
+              <div class="flex items-center justify-between">
+                <h4 class="font-bold text-sm text-on-surface flex items-center gap-2">
+                  <span class="material-symbols-outlined text-[18px] text-primary">edit_square</span>
+                  <span>Mis Datos Personales</span>
+                </h4>
+                <span class="text-[10px] text-outline font-medium">Perfil Activo</span>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-[11px] font-bold text-on-surface mb-1">Nombre Completo *</label>
+                  <input type="text" id="settings-profile-name" required class="w-full h-10 px-3.5 rounded-xl bg-surface-container-low text-on-surface text-xs border border-outline-variant/30 focus:border-primary">
+                </div>
+                <div>
+                  <label class="block text-[11px] font-bold text-on-surface mb-1">Correo Electrónico *</label>
+                  <input type="email" id="settings-profile-email" required class="w-full h-10 px-3.5 rounded-xl bg-surface-container-low text-on-surface text-xs border border-outline-variant/30 focus:border-primary">
+                </div>
+                <div>
+                  <label class="block text-[11px] font-bold text-on-surface mb-1">RUT / Identificación</label>
+                  <input type="text" id="settings-profile-rut" placeholder="15.234.567-8" class="w-full h-10 px-3.5 rounded-xl bg-surface-container-low text-on-surface text-xs font-mono border border-outline-variant/30 focus:border-primary">
+                </div>
+                <div>
+                  <label class="block text-[11px] font-bold text-on-surface mb-1">Unidad / Junta / Departamento</label>
+                  <input type="text" id="settings-profile-dept" placeholder="Comunidad / Dirección" class="w-full h-10 px-3.5 rounded-xl bg-surface-container-low text-on-surface text-xs border border-outline-variant/30 focus:border-primary">
+                </div>
+              </div>
+
+              <div class="flex justify-end pt-1">
+                <button type="submit" class="px-4 py-2 rounded-xl bg-primary text-on-primary font-bold text-xs flex items-center gap-1.5 shadow-sm hover:bg-primary-container active:scale-95 transition-all">
+                  <span class="material-symbols-outlined text-[16px]">save</span>
+                  <span>Actualizar Mis Datos</span>
+                </button>
+              </div>
+            </form>
+
+            <!-- 2. Cambiar Mi Contraseña Directamente -->
+            <form id="form-settings-password" class="p-4 rounded-2xl bg-surface-container-lowest border border-outline-variant/20 space-y-3.5">
+              <div class="flex items-center justify-between">
+                <h4 class="font-bold text-sm text-on-surface flex items-center gap-2">
+                  <span class="material-symbols-outlined text-[18px] text-primary">key</span>
+                  <span>Cambiar Mi Contraseña</span>
+                </h4>
+                <span class="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">Seguridad</span>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-[11px] font-bold text-on-surface mb-1">Nueva Contraseña *</label>
+                  <div class="relative flex items-center">
+                    <input type="password" id="settings-new-pwd" required minlength="4" placeholder="Mínimo 4 caracteres" class="w-full h-10 pl-3.5 pr-9 rounded-xl bg-surface-container-low text-on-surface text-xs border border-outline-variant/30 focus:border-primary">
+                    <button type="button" id="btn-toggle-settings-pwd" class="absolute right-2.5 text-outline hover:text-on-surface">
+                      <span class="material-symbols-outlined text-[16px]">visibility</span>
+                    </button>
+                  </div>
+                </div>
+                <div>
+                  <label class="block text-[11px] font-bold text-on-surface mb-1">Confirmar Contraseña *</label>
+                  <input type="password" id="settings-confirm-pwd" required minlength="4" placeholder="Repite la nueva clave" class="w-full h-10 px-3.5 rounded-xl bg-surface-container-low text-on-surface text-xs border border-outline-variant/30 focus:border-primary">
+                </div>
+              </div>
+
+              <div class="flex justify-end pt-1">
+                <button type="submit" id="btn-submit-settings-pwd" class="px-4 py-2 rounded-xl bg-primary text-on-primary font-bold text-xs flex items-center gap-1.5 shadow-sm hover:bg-primary-container active:scale-95 transition-all">
+                  <span class="material-symbols-outlined text-[16px]">lock_reset</span>
+                  <span>Guardar Nueva Contraseña</span>
+                </button>
+              </div>
+            </form>
+
+          </div>
+
+        </div>
+
+        <!-- ========================================================== -->
+        <!-- PESTAÑA 3: ALERTAS, NOTIFICACIONES Y OPERACIÓN             -->
+        <!-- ========================================================== -->
+        <div id="settings-panel-preferences" class="settings-tab-panel hidden space-y-4">
+          
+          <label class="font-bold text-sm text-on-surface flex items-center gap-2">
+            <span class="material-symbols-outlined text-[18px] text-primary">notifications_active</span>
+            <span>Notificaciones y Preferencias Operativas</span>
+          </label>
+
+          <!-- Sector Comunal Predeterminado -->
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 p-3.5 rounded-2xl bg-surface-container-low border border-outline-variant/20">
+            <div class="flex items-center gap-2.5">
+              <span class="material-symbols-outlined text-[20px] text-primary">location_city</span>
+              <div>
+                <span class="font-bold text-on-surface block">Sector Comunal Predeterminado</span>
+                <span class="text-[11px] text-outline">Preselecciona tu sector habitual al crear reportes ciudadanos</span>
+              </div>
+            </div>
+            <select id="pref-select-default-sector" class="h-9 px-3 rounded-xl bg-surface-container-lowest text-on-surface font-bold text-xs border border-outline-variant/40">
+              <option value="centro">Centro Histórico</option>
+              <option value="norte">Sector Norte</option>
+              <option value="sur">Sector Sur</option>
+              <option value="oriente">Sector Oriente</option>
+              <option value="poniente">Sector Poniente</option>
+            </select>
+          </div>
+
+          <!-- Mostrar Notificaciones Emergentes (Toasts) -->
+          <label class="flex items-center justify-between gap-3 p-3.5 rounded-2xl bg-surface-container-low border border-outline-variant/20 cursor-pointer hover:bg-surface-container transition-all">
+            <div class="flex items-center gap-2.5">
+              <span class="material-symbols-outlined text-[20px] text-primary">chat_bubble</span>
+              <div>
+                <span class="font-bold text-on-surface block">Mostrar Avisos Emergentes (Toasts)</span>
+                <span class="text-[11px] text-outline">Muestra notificaciones flotantes en la esquina al realizar acciones</span>
+              </div>
+            </div>
+            <input type="checkbox" id="pref-toggle-toasts" checked class="w-4 h-4 accent-primary rounded cursor-pointer shrink-0">
+          </label>
+
+          <!-- Switch: Sonido y Notificaciones -->
+          <div class="flex items-center justify-between gap-3 p-3.5 rounded-2xl bg-surface-container-low border border-outline-variant/20">
+            <label class="flex items-center gap-2.5 cursor-pointer flex-1">
+              <span class="material-symbols-outlined text-[20px] text-primary">volume_up</span>
+              <div>
+                <span class="font-bold text-on-surface block">Sonido Suave en Alertas</span>
+                <span class="text-[11px] text-outline">Reproduce un tono breve al confirmar reportes o cambios de estado</span>
+              </div>
+            </label>
+            <div class="flex items-center gap-2 shrink-0">
+              <button type="button" id="btn-test-alert-sound" class="px-2.5 py-1 rounded-lg bg-surface-container hover:bg-surface-container-high text-primary font-bold text-[11px] transition-all">
+                Probar
+              </button>
+              <input type="checkbox" id="pref-toggle-sound" class="w-4 h-4 accent-primary rounded cursor-pointer">
+            </div>
+          </div>
+
+          <!-- Selector: Sincronización Automática -->
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 p-3.5 rounded-2xl bg-surface-container-low border border-outline-variant/20">
+            <div class="flex items-center gap-2.5">
+              <span class="material-symbols-outlined text-[20px] text-primary">sync_saved_locally</span>
+              <div>
+                <span class="font-bold text-on-surface block">Auto-sincronización en Tiempo Real</span>
+                <span class="text-[11px] text-outline">Actualiza la bandeja y métricas automáticamente en segundo plano</span>
+              </div>
+            </div>
+            <select id="pref-select-autosync" class="h-9 px-3 rounded-xl bg-surface-container-lowest text-on-surface font-bold text-xs border border-outline-variant/40">
+              <option value="0">Manual (Desactivado)</option>
+              <option value="30">Cada 30 segundos</option>
+              <option value="60">Cada 1 minuto</option>
+              <option value="300">Cada 5 minutos</option>
+            </select>
+          </div>
+
+        </div>
+
+        <!-- ========================================================== -->
+        <!-- PESTAÑA 4: ACCESIBILIDAD, SISTEMA Y RESTABLECIMIENTO       -->
+        <!-- ========================================================== -->
+        <div id="settings-panel-accessibility" class="settings-tab-panel hidden space-y-4">
+          
+          <label class="font-bold text-sm text-on-surface flex items-center gap-2">
+            <span class="material-symbols-outlined text-[18px] text-primary">accessibility_new</span>
+            <span>Accesibilidad Visual y Mantenimiento</span>
+          </label>
+
+          <!-- Switch: Alto Contraste -->
+          <label class="flex items-center justify-between gap-3 p-3.5 rounded-2xl bg-surface-container-low border border-outline-variant/20 cursor-pointer hover:bg-surface-container transition-all">
+            <div class="flex items-center gap-2.5">
+              <span class="material-symbols-outlined text-[20px] text-primary">visibility</span>
+              <div>
+                <span class="font-bold text-on-surface block">Bordes y Contornos de Alto Contraste</span>
+                <span class="text-[11px] text-outline">Remarca las líneas divisorias, tarjetas y campos de formulario para mejor lectura</span>
+              </div>
+            </div>
+            <input type="checkbox" id="pref-toggle-contrast" class="w-4 h-4 accent-primary rounded cursor-pointer shrink-0">
+          </label>
+
+          <!-- Switch: Reducir Animaciones -->
+          <label class="flex items-center justify-between gap-3 p-3.5 rounded-2xl bg-surface-container-low border border-outline-variant/20 cursor-pointer hover:bg-surface-container transition-all">
+            <div class="flex items-center gap-2.5">
+              <span class="material-symbols-outlined text-[20px] text-primary">motion_photos_off</span>
+              <div>
+                <span class="font-bold text-on-surface block">Reducir Movimiento y Animaciones</span>
+                <span class="text-[11px] text-outline">Desactiva efectos de transición, pulsos del mapa y desplazamientos suaves</span>
+              </div>
+            </div>
+            <input type="checkbox" id="pref-toggle-motion" class="w-4 h-4 accent-primary rounded cursor-pointer shrink-0">
+          </label>
+
+          <!-- Información del Sistema y Respaldo de Preferencias -->
+          <div class="p-4 rounded-2xl bg-surface-container-low border border-outline-variant/20 space-y-3">
+            <div class="flex items-center justify-between">
+              <span class="font-bold text-on-surface flex items-center gap-1.5">
+                <span class="material-symbols-outlined text-[18px] text-primary">dns</span>
+                <span>Estado del Sistema Local</span>
+              </span>
+              <span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold text-[10px]">CivicCore v1.0 • SQLite Activo</span>
+            </div>
+            <p class="text-[11px] text-outline">Tus ajustes de apariencia, accesibilidad y sector predeterminado se guardan automáticamente en este navegador.</p>
+            <div class="flex flex-wrap items-center gap-2 pt-1">
+              <button type="button" id="btn-export-system-prefs" class="px-3.5 py-2 rounded-xl bg-surface-container-lowest hover:bg-surface-container text-on-surface border border-outline-variant/30 font-bold text-xs flex items-center gap-1.5 transition-all">
+                <span class="material-symbols-outlined text-[16px] text-primary">download</span>
+                <span>Exportar Mis Ajustes</span>
+              </button>
+              <button type="button" id="btn-reset-system-settings" class="px-3.5 py-2 rounded-xl bg-error-container/70 hover:bg-error-container text-on-error-container font-bold text-xs flex items-center gap-1.5 transition-all">
+                <span class="material-symbols-outlined text-[16px]">restart_alt</span>
+                <span>Restablecer Valores de Fábrica</span>
+              </button>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- Pie del Modal -->
+      <div class="p-4 sm:p-5 border-t border-outline-variant/20 bg-surface-container-low/50 flex items-center justify-between gap-2 shrink-0">
+        <span class="text-[11px] text-outline flex items-center gap-1">
+          <span class="material-symbols-outlined text-[15px] text-emerald-500">check_circle</span>
+          <span>Guardado automático activo</span>
+        </span>
+        <button type="button" id="btn-save-close-system-settings" class="px-6 py-2.5 rounded-xl bg-primary text-on-primary font-bold text-xs flex items-center gap-1.5 shadow-md hover:bg-primary-container active:scale-95 transition-all">
+          <span class="material-symbols-outlined text-[16px]">done_all</span>
+          <span>Guardar y Cerrar</span>
+        </button>
+      </div>
+
+    </div>
   </div>
 
   <!-- Contenedor de Alertas Toast -->

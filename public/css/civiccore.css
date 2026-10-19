@@ -1,10 +1,234 @@
 /* ==========================================================================
-   CivicCore Design Enhancements, Animations & Mobile Responsive System
+   CivicCore Design Enhancements, Themes (Light/Dark), Accents & Accessibility
    ========================================================================== */
+
+:root {
+  /* Paleta Base (Modo Claro + Azul Municipal por defecto) */
+  --cc-primary: 0 40 142;
+  --cc-primary-container: 30 64 175;
+  --cc-on-primary: 255 255 255;
+  --cc-on-primary-container: 168 184 255;
+  --cc-primary-fixed: 221 225 255;
+  --cc-primary-fixed-dim: 184 196 255;
+
+  --cc-secondary: 79 92 142;
+  --cc-secondary-container: 183 196 253;
+  --cc-on-secondary: 255 255 255;
+  --cc-on-secondary-container: 67 80 129;
+  --cc-secondary-fixed: 220 225 255;
+  --cc-secondary-fixed-dim: 183 196 253;
+
+  --cc-tertiary: 0 61 40;
+  --cc-tertiary-container: 0 86 58;
+  --cc-on-tertiary: 255 255 255;
+  --cc-on-tertiary-container: 91 207 158;
+  --cc-tertiary-fixed: 133 248 196;
+  --cc-tertiary-fixed-dim: 104 219 169;
+
+  --cc-error: 186 26 26;
+  --cc-error-container: 255 218 214;
+  --cc-on-error: 255 255 255;
+  --cc-on-error-container: 147 0 10;
+
+  --cc-surface: 248 249 255;
+  --cc-surface-dim: 203 219 245;
+  --cc-surface-bright: 248 249 255;
+  --cc-surface-container-lowest: 255 255 255;
+  --cc-surface-container-low: 239 244 255;
+  --cc-surface-container: 229 238 255;
+  --cc-surface-container-high: 220 233 255;
+  --cc-surface-container-highest: 211 228 254;
+  --cc-surface-variant: 211 228 254;
+  --cc-surface-tint: 55 85 195;
+
+  --cc-on-surface: 11 28 48;
+  --cc-on-surface-variant: 68 70 83;
+  --cc-inverse-surface: 33 49 69;
+  --cc-inverse-on-surface: 234 241 255;
+  --cc-outline: 117 118 132;
+  --cc-outline-variant: 196 197 213;
+}
+
+/* ==========================================================================
+   MODO OSCURO (html.dark)
+   ========================================================================== */
+html.dark {
+  color-scheme: dark;
+
+  --cc-primary: 96 165 250;
+  --cc-primary-container: 37 99 235;
+  --cc-on-primary: 10 20 45;
+  --cc-on-primary-container: 219 234 254;
+  --cc-primary-fixed: 30 58 138;
+  --cc-primary-fixed-dim: 37 99 235;
+
+  --cc-secondary: 148 163 184;
+  --cc-secondary-container: 51 65 85;
+  --cc-on-secondary: 15 23 42;
+  --cc-on-secondary-container: 226 232 240;
+  --cc-secondary-fixed: 30 41 59;
+  --cc-secondary-fixed-dim: 51 65 85;
+
+  --cc-tertiary: 52 211 153;
+  --cc-tertiary-container: 6 95 70;
+  --cc-on-tertiary: 6 46 34;
+  --cc-on-tertiary-container: 167 243 208;
+  --cc-tertiary-fixed: 6 78 59;
+  --cc-tertiary-fixed-dim: 4 120 87;
+
+  --cc-error: 248 113 113;
+  --cc-error-container: 127 29 29;
+  --cc-on-error: 69 10 10;
+  --cc-on-error-container: 254 202 202;
+
+  --cc-surface: 11 17 32;
+  --cc-surface-dim: 7 12 24;
+  --cc-surface-bright: 24 34 56;
+  --cc-surface-container-lowest: 17 25 43;
+  --cc-surface-container-low: 22 32 53;
+  --cc-surface-container: 29 41 66;
+  --cc-surface-container-high: 38 52 82;
+  --cc-surface-container-highest: 49 65 99;
+  --cc-surface-variant: 42 56 85;
+  --cc-surface-tint: 96 165 250;
+
+  --cc-on-surface: 241 245 249;
+  --cc-on-surface-variant: 184 196 218;
+  --cc-inverse-surface: 226 232 240;
+  --cc-inverse-on-surface: 15 23 42;
+  --cc-outline: 138 153 178;
+  --cc-outline-variant: 58 73 102;
+}
+
+/* Ajustes de contraste para badges estáticos en Modo Oscuro */
+html.dark .bg-emerald-100 { background-color: rgba(16, 185, 129, 0.2) !important; }
+html.dark .text-emerald-800,
+html.dark .text-emerald-700 { color: #6ee7b7 !important; }
+html.dark .bg-emerald-50 { background-color: rgba(16, 185, 129, 0.12) !important; }
+html.dark .bg-blue-100 { background-color: rgba(59, 130, 246, 0.22) !important; }
+html.dark .text-blue-800 { color: #93c5fd !important; }
+html.dark .bg-red-100,
+html.dark .bg-red-50 { background-color: rgba(239, 68, 68, 0.2) !important; }
+html.dark .text-red-800,
+html.dark .text-red-700 { color: #fca5a5 !important; }
+html.dark .bg-amber-100,
+html.dark .bg-amber-50 { background-color: rgba(245, 158, 11, 0.2) !important; }
+html.dark .text-amber-800,
+html.dark .text-amber-700 { color: #fcd34d !important; }
+html.dark .bg-slate-200,
+html.dark .bg-slate-100 { background-color: rgba(148, 163, 184, 0.2) !important; }
+html.dark .text-slate-800,
+html.dark .text-slate-700 { color: #e2e8f0 !important; }
+
+/* ==========================================================================
+   TEMAS DE COLOR DE ACENTO (data-accent)
+   ========================================================================== */
+html[data-accent="emerald"]:not(.dark) {
+  --cc-primary: 4 120 87;
+  --cc-primary-container: 5 150 105;
+  --cc-primary-fixed: 209 250 229;
+  --cc-primary-fixed-dim: 167 243 208;
+  --cc-surface-tint: 4 120 87;
+}
+html.dark[data-accent="emerald"] {
+  --cc-primary: 52 211 153;
+  --cc-primary-container: 5 150 105;
+  --cc-on-primary: 6 46 34;
+  --cc-primary-fixed: 6 78 59;
+  --cc-primary-fixed-dim: 4 120 87;
+  --cc-surface-tint: 52 211 153;
+}
+
+html[data-accent="indigo"]:not(.dark) {
+  --cc-primary: 79 70 229;
+  --cc-primary-container: 67 56 202;
+  --cc-primary-fixed: 224 231 255;
+  --cc-primary-fixed-dim: 199 210 254;
+  --cc-surface-tint: 79 70 229;
+}
+html.dark[data-accent="indigo"] {
+  --cc-primary: 129 140 248;
+  --cc-primary-container: 79 70 229;
+  --cc-on-primary: 17 14 56;
+  --cc-primary-fixed: 49 46 129;
+  --cc-primary-fixed-dim: 67 56 202;
+  --cc-surface-tint: 129 140 248;
+}
+
+html[data-accent="amber"]:not(.dark) {
+  --cc-primary: 180 83 9;
+  --cc-primary-container: 217 119 6;
+  --cc-primary-fixed: 254 243 199;
+  --cc-primary-fixed-dim: 253 230 138;
+  --cc-surface-tint: 180 83 9;
+}
+html.dark[data-accent="amber"] {
+  --cc-primary: 251 191 36;
+  --cc-primary-container: 180 83 9;
+  --cc-on-primary: 45 20 2;
+  --cc-primary-fixed: 120 53 15;
+  --cc-primary-fixed-dim: 180 83 9;
+  --cc-surface-tint: 251 191 36;
+}
+
+html[data-accent="slate"]:not(.dark) {
+  --cc-primary: 30 41 59;
+  --cc-primary-container: 51 65 85;
+  --cc-primary-fixed: 226 232 240;
+  --cc-primary-fixed-dim: 203 213 225;
+  --cc-surface-tint: 30 41 59;
+}
+html.dark[data-accent="slate"] {
+  --cc-primary: 148 163 184;
+  --cc-primary-container: 71 85 105;
+  --cc-on-primary: 15 23 42;
+  --cc-primary-fixed: 30 41 59;
+  --cc-primary-fixed-dim: 51 65 85;
+  --cc-surface-tint: 148 163 184;
+}
+
+/* ==========================================================================
+   ACCESIBILIDAD: ESCALA DE TEXTO, VISTA COMPACTA, ALTO CONTRASTE, SIN ANIMACIÓN
+   ========================================================================== */
+html[data-font-scale="sm"] {
+  font-size: 14.5px;
+}
+html[data-font-scale="normal"] {
+  font-size: 16px;
+}
+html[data-font-scale="lg"] {
+  font-size: 17.5px;
+}
+html[data-font-scale="xl"] {
+  font-size: 19px;
+}
+
+html.cc-high-contrast {
+  --cc-outline-variant: 100 116 139;
+}
+html.dark.cc-high-contrast {
+  --cc-outline-variant: 148 163 184;
+  --cc-surface-container-lowest: 10 15 28;
+}
+
+html.cc-reduce-motion *,
+html.cc-reduce-motion *::before,
+html.cc-reduce-motion *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}
+
+html.cc-compact-cards #incidents-container article {
+  padding: 0.75rem 1rem !important;
+  gap: 0.5rem !important;
+}
 
 html, body {
   overflow-x: hidden;
   -webkit-tap-highlight-color: transparent;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 /* Animación de apertura suave para modales */
@@ -90,7 +314,7 @@ html, body {
 /* Estilos de inputs seleccionados */
 input:focus, select:focus, textarea:focus {
   outline: none;
-  box-shadow: 0 0 0 3px rgba(0, 40, 142, 0.15);
+  box-shadow: 0 0 0 3px rgb(var(--cc-primary) / 0.2);
 }
 
 /* ==========================================================================
