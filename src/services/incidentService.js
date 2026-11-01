@@ -46,12 +46,24 @@ class IncidentService {
     return db.toggleUserStatus(id, status, adminActor);
   }
 
-  updatePassword(idOrEmail, newPassword, actor = { role: 'admin', name: 'Super Admin Root' }) {
-    return db.updateUserPassword(idOrEmail, newPassword, actor);
+  updatePassword(idOrEmail, newPassword, actor = { role: 'admin', name: 'Super Admin Root' }, currentPassword = null) {
+    return db.updateUserPassword(idOrEmail, newPassword, actor, currentPassword);
   }
 
   updateUserProfile(id, profileData, adminActor = { role: 'admin', name: 'Super Admin Root' }) {
     return db.updateUserProfile(id, profileData, adminActor);
+  }
+
+  updateUserRole(id, newRole, adminActor = { role: 'admin', name: 'Super Admin Root' }) {
+    return db.updateUserRole(id, newRole, adminActor);
+  }
+
+  deleteUser(id, adminActor = { role: 'admin', name: 'Super Admin Root' }) {
+    return db.deleteUser(id, adminActor);
+  }
+
+  deleteIncident(id, adminActor = { role: 'admin', name: 'Super Admin Root' }) {
+    return db.deleteIncident(id, adminActor);
   }
 
   registerVecino(userData) {
@@ -69,6 +81,23 @@ class IncidentService {
 
   addAuditLog(action, actorName, actorRole, details, ip = '127.0.0.1') {
     return db.addSystemAuditLog(action, actorName, actorRole, details, ip);
+  }
+
+  clearAuditLogs() {
+    return db.clearSystemAuditLogs();
+  }
+
+  // Copias de Seguridad de Base de Datos
+  createBackup() {
+    return db.createDatabaseBackup();
+  }
+
+  listBackups() {
+    return db.listDatabaseBackups();
+  }
+
+  restoreBackup(fileName) {
+    return db.restoreDatabaseBackup(fileName);
   }
 
   // Configuración del Sistema

@@ -11,17 +11,54 @@
   'use strict';
 
   // ==========================================
+  // Utilidades de Seguridad (Sanitización XSS) y Sesión
+  // ==========================================
+  function escapeHtml(value) {
+    if (value === null || value === undefined) return '';
+    return String(value)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  const GUEST_USER = {
+    id: 0,
+    name: 'Vecino Invitado',
+    email: 'invitado@comuna.cl',
+    role: 'invitado',
+    rutDni: 'Sin DNI',
+    department: 'Comunidad'
+  };
+
+  function loadSessionUser() {
+    try {
+      const raw = localStorage.getItem('civiccore_session_user');
+      if (!raw) return { ...GUEST_USER };
+      const parsed = JSON.parse(raw);
+      if (parsed && parsed.role && parsed.role !== 'invitado') {
+        return { ...GUEST_USER, ...parsed };
+      }
+    } catch (e) {}
+    return { ...GUEST_USER };
+  }
+
+  function saveSessionUser(user) {
+    try {
+      if (!user || user.role === 'invitado') {
+        localStorage.removeItem('civiccore_session_user');
+      } else {
+        localStorage.setItem('civiccore_session_user', JSON.stringify(user));
+      }
+    } catch (e) {}
+  }
+
+  // ==========================================
   // Estado Global de la Aplicación
   // ==========================================
   const state = {
-    currentUser: {
-      id: 0,
-      name: 'Vecino Invitado',
-      email: 'invitado@comuna.cl',
-      role: 'invitado',
-      rutDni: 'Sin DNI',
-      department: 'Comunidad'
-    },
+    currentUser: loadSessionUser(),
     currentView: 'view-inicio',
     currentFormStep: 1,
     incidents: [],
@@ -152,6 +189,7 @@
     formModerateIncident: document.getElementById('form-moderate-incident'),
     modIncidentId: document.getElementById('mod-incident-id'),
     modFolioTag: document.getElementById('mod-folio-tag'),
+    modCategory: document.getElementById('mod-category'),
     modPriorityLevel: document.getElementById('mod-priority-level'),
     modAssignedTeam: document.getElementById('mod-assigned-team'),
     modTitle: document.getElementById('mod-title'),
@@ -159,6 +197,8 @@
     adminModerationList: document.getElementById('admin-moderation-list'),
     auditTableBody: document.getElementById('audit-table-body'),
     auditStatEvents: document.getElementById('audit-stat-events'),
+    auditStatAdminActions: document.getElementById('audit-stat-admin-actions'),
+    auditStatAuthEvents: document.getElementById('audit-stat-auth-events'),
     btnRefreshAudit: document.getElementById('btn-refresh-audit'),
     btnSaveSettings: document.getElementById('btn-save-settings'),
     adminKpiVecinos: document.getElementById('admin-kpi-vecinos'),
@@ -185,6 +225,9 @@
     modalDesc: document.getElementById('modal-desc'),
     modalReportedBy: document.getElementById('modal-reportedBy'),
     modalChannel: document.getElementById('modal-channel'),
+    modalCategory: document.getElementById('modal-category'),
+    modalUrgency: document.getElementById('modal-urgency'),
+    modalAssignedTeam: document.getElementById('modal-assignedTeam'),
     btnCloseModal: document.getElementById('btn-close-modal'),
     btnChangeStatus: document.querySelectorAll('.btn-change-status'),
     modalStatusActionsContainer: document.getElementById('modal-status-actions-container'),
@@ -204,6 +247,8 @@
     changePwdUserEmail: document.getElementById('change-pwd-user-email'),
     changePwdTargetId: document.getElementById('change-pwd-target-id'),
     changePwdTargetEmail: document.getElementById('change-pwd-target-email'),
+    currentPasswordGroup: document.getElementById('current-password-group'),
+    inputCurrentPassword: document.getElementById('input-current-password'),
     inputNewPassword: document.getElementById('input-new-password'),
     inputConfirmPassword: document.getElementById('input-confirm-password'),
     btnToggleNewPwd: document.getElementById('btn-toggle-new-pwd'),
@@ -310,6 +355,15 @@
       }
     });
 
+    document.querySelectorAll('.header-nav-btn').forEach(btn => {
+      const target = btn.getAttribute('data-target');
+      if (target && target === viewId) {
+        btn.className = 'header-nav-btn px-2.5 py-1.5 rounded-xl text-xs font-bold bg-primary/10 text-primary transition-all flex items-center gap-1.5 shrink-0';
+      } else {
+        btn.className = 'header-nav-btn px-2.5 py-1.5 rounded-xl text-xs font-semibold text-on-surface hover:bg-surface-container transition-all flex items-center gap-1.5 shrink-0';
+      }
+    });
+
     document.querySelectorAll('.mobile-nav-btn').forEach(btn => {
       const target = btn.getAttribute('data-target');
       if (target === viewId) {
@@ -340,39 +394,121 @@
       });
     }
 
-    // 2. Control de Visibilidad de Paneles según Rol
+    // 2. Barra lateral permanentemente oculta; navegación integrada en Header y Barra Móvil
+    if (dom.sidebarDesktop) {
+      dom.sidebarDesktop.classList.add('hidden', 'lg:hidden');
+      dom.sidebarDesktop.classList.remove('lg:flex');
+    }
+
     if (role === 'invitado') {
-      // Para invitado: ocultar sidebar en desktop, barra inferior en móvil y badge de usuario
-      if (dom.sidebarDesktop) dom.sidebarDesktop.classList.add('lg:hidden');
       if (dom.mobileBottomNav) dom.mobileBottomNav.classList.remove('hidden');
       if (dom.currentUserBadge) {
         dom.currentUserBadge.classList.add('hidden');
         dom.currentUserBadge.classList.remove('flex');
       }
-      const btnSysSettings = document.getElementById('sidebar-btn-system-settings');
-      if (dom.sidebarBtnChangePassword) dom.sidebarBtnChangePassword.classList.add('hidden');
-      if (btnSysSettings) btnSysSettings.classList.add('col-span-full');
       if (dom.btnAuthText) dom.btnAuthText.textContent = 'Iniciar Sesión';
       if (dom.roleInfoBanner) {
         dom.roleInfoBanner.innerHTML = '';
         dom.roleInfoBanner.classList.add('hidden');
       }
     } else {
-      // Para usuarios autenticados: mostrar sidebar, barra móvil y badge de usuario
-      const btnSysSettings = document.getElementById('sidebar-btn-system-settings');
-      if (dom.sidebarDesktop) dom.sidebarDesktop.classList.remove('lg:hidden');
       if (dom.mobileBottomNav) dom.mobileBottomNav.classList.remove('hidden');
       if (dom.currentUserBadge) {
         dom.currentUserBadge.classList.remove('hidden');
         dom.currentUserBadge.classList.add('flex');
       }
-      if (dom.sidebarBtnChangePassword) dom.sidebarBtnChangePassword.classList.remove('hidden');
-      if (btnSysSettings) btnSysSettings.classList.remove('col-span-full');
       if (dom.btnAuthText) dom.btnAuthText.textContent = 'Cerrar Sesión';
       if (dom.roleInfoBanner) {
         dom.roleInfoBanner.innerHTML = '';
         dom.roleInfoBanner.classList.add('hidden');
       }
+    }
+
+    // Actualizar botones de navegación rápida en el Header Superior según el rol
+    const headerQuickNav = document.getElementById('header-quick-nav');
+    if (headerQuickNav) {
+      if (role === 'vecino') {
+        headerQuickNav.innerHTML = `
+          <button data-target="view-inicio" onclick="window.civicApp.switchView('view-inicio')" class="header-nav-btn px-2.5 py-1.5 rounded-xl text-xs font-semibold text-on-surface hover:bg-surface-container transition-all flex items-center gap-1.5 shrink-0">
+            <span class="material-symbols-outlined text-[16px] text-primary">home</span>
+            <span>Inicio</span>
+          </button>
+          <button data-target="view-vecino" onclick="window.civicApp.switchView('view-vecino')" class="header-nav-btn px-2.5 py-1.5 rounded-xl text-xs font-semibold text-on-surface hover:bg-surface-container transition-all flex items-center gap-1.5 shrink-0">
+            <span class="material-symbols-outlined text-[16px] text-primary">cottage</span>
+            <span>Portal Vecinal</span>
+          </button>
+          <button data-target="view-nuevo" onclick="window.civicApp.switchView('view-nuevo')" class="header-nav-btn px-2.5 py-1.5 rounded-xl text-xs font-semibold text-on-surface hover:bg-surface-container transition-all flex items-center gap-1.5 shrink-0">
+            <span class="material-symbols-outlined text-[16px] text-primary">add_circle</span>
+            <span>Reportar</span>
+          </button>
+        `;
+      } else if (role === 'trabajador') {
+        headerQuickNav.innerHTML = `
+          <button data-target="view-inicio" onclick="window.civicApp.switchView('view-inicio')" class="header-nav-btn px-2.5 py-1.5 rounded-xl text-xs font-semibold text-on-surface hover:bg-surface-container transition-all flex items-center gap-1.5 shrink-0">
+            <span class="material-symbols-outlined text-[16px] text-primary">home</span>
+            <span>Inicio</span>
+          </button>
+          <button data-target="view-incidencias" onclick="window.civicApp.switchView('view-incidencias')" class="header-nav-btn px-2.5 py-1.5 rounded-xl text-xs font-semibold text-on-surface hover:bg-surface-container transition-all flex items-center gap-1.5 shrink-0">
+            <span class="material-symbols-outlined text-[16px] text-primary">assignment</span>
+            <span>Bandeja</span>
+          </button>
+          <button data-target="view-mapa" onclick="window.civicApp.switchView('view-mapa')" class="header-nav-btn px-2.5 py-1.5 rounded-xl text-xs font-semibold text-on-surface hover:bg-surface-container transition-all flex items-center gap-1.5 shrink-0">
+            <span class="material-symbols-outlined text-[16px] text-primary">map</span>
+            <span>Mapa</span>
+          </button>
+          <button data-target="view-panel" onclick="window.civicApp.switchView('view-panel')" class="header-nav-btn px-2.5 py-1.5 rounded-xl text-xs font-semibold text-on-surface hover:bg-surface-container transition-all flex items-center gap-1.5 shrink-0">
+            <span class="material-symbols-outlined text-[16px] text-primary">dashboard</span>
+            <span>KPIs</span>
+          </button>
+          <button data-target="view-nuevo" onclick="window.civicApp.switchView('view-nuevo')" class="header-nav-btn px-2.5 py-1.5 rounded-xl text-xs font-semibold text-on-surface hover:bg-surface-container transition-all flex items-center gap-1.5 shrink-0">
+            <span class="material-symbols-outlined text-[16px] text-primary">add_circle</span>
+            <span>Reportar</span>
+          </button>
+        `;
+      } else if (role === 'admin') {
+        headerQuickNav.innerHTML = `
+          <button data-target="view-admin-hub" onclick="window.civicApp.switchView('view-admin-hub')" class="header-nav-btn px-2.5 py-1.5 rounded-xl text-xs font-semibold text-on-surface hover:bg-surface-container transition-all flex items-center gap-1.5 shrink-0">
+            <span class="material-symbols-outlined text-[16px] text-primary">shield_person</span>
+            <span>Consola</span>
+          </button>
+          <button data-target="view-admin-users" onclick="window.civicApp.switchView('view-admin-users')" class="header-nav-btn px-2.5 py-1.5 rounded-xl text-xs font-semibold text-on-surface hover:bg-surface-container transition-all flex items-center gap-1.5 shrink-0">
+            <span class="material-symbols-outlined text-[16px] text-primary">vpn_key</span>
+            <span>Usuarios</span>
+          </button>
+          <button data-target="view-admin-moderation" onclick="window.civicApp.switchView('view-admin-moderation')" class="header-nav-btn px-2.5 py-1.5 rounded-xl text-xs font-semibold text-on-surface hover:bg-surface-container transition-all flex items-center gap-1.5 shrink-0">
+            <span class="material-symbols-outlined text-[16px] text-primary">edit_note</span>
+            <span>Moderar</span>
+          </button>
+          <button data-target="view-admin-audit" onclick="window.civicApp.switchView('view-admin-audit')" class="header-nav-btn px-2.5 py-1.5 rounded-xl text-xs font-semibold text-on-surface hover:bg-surface-container transition-all flex items-center gap-1.5 shrink-0">
+            <span class="material-symbols-outlined text-[16px] text-primary">history_edu</span>
+            <span>Auditoría</span>
+          </button>
+          <button data-target="view-incidencias" onclick="window.civicApp.switchView('view-incidencias')" class="header-nav-btn px-2.5 py-1.5 rounded-xl text-xs font-semibold text-on-surface hover:bg-surface-container transition-all flex items-center gap-1.5 shrink-0">
+            <span class="material-symbols-outlined text-[16px] text-primary">assignment</span>
+            <span>Bandeja</span>
+          </button>
+          <button data-target="view-inicio" onclick="window.civicApp.switchView('view-inicio')" class="header-nav-btn px-2.5 py-1.5 rounded-xl text-xs font-semibold text-on-surface hover:bg-surface-container transition-all flex items-center gap-1.5 shrink-0">
+            <span class="material-symbols-outlined text-[16px] text-primary">home</span>
+            <span>Inicio</span>
+          </button>
+        `;
+      } else {
+        headerQuickNav.innerHTML = `
+          <button data-target="view-inicio" onclick="window.civicApp.switchView('view-inicio')" class="header-nav-btn px-2.5 py-1.5 rounded-xl text-xs font-semibold text-on-surface hover:bg-surface-container transition-all flex items-center gap-1.5 shrink-0">
+            <span class="material-symbols-outlined text-[16px] text-primary">home</span>
+            <span>Inicio</span>
+          </button>
+          <button data-target="view-nuevo" onclick="window.civicApp.switchView('view-nuevo')" class="header-nav-btn px-2.5 py-1.5 rounded-xl text-xs font-semibold text-on-surface hover:bg-surface-container transition-all flex items-center gap-1.5 shrink-0">
+            <span class="material-symbols-outlined text-[16px] text-primary">add_circle</span>
+            <span>Reportar</span>
+          </button>
+          <button onclick="window.civicApp.scrollToHomeTracker()" class="header-nav-btn px-2.5 py-1.5 rounded-xl text-xs font-semibold text-on-surface hover:bg-surface-container transition-all flex items-center gap-1.5 shrink-0">
+            <span class="material-symbols-outlined text-[16px] text-primary">search</span>
+            <span>Rastrear Folio</span>
+          </button>
+        `;
+      }
+      updateActiveNavIndicators(state.currentView);
     }
 
     // 3. Renderizar Sidebar Desktop
@@ -656,8 +792,19 @@
       state.stats = json.data;
       renderDashboardStats();
       renderAdminHub();
+      renderHomeStats();
+      if (state.stats && state.stats.settings) {
+        applyMunicipalitySettings(state.stats.settings);
+      }
     } catch (err) {
       console.error('Error al cargar métricas:', err);
+    }
+  }
+
+  function applyMunicipalitySettings(settings) {
+    if (!settings) return;
+    if (settings.municipality_name) {
+      document.title = `CivicCore | ${settings.municipality_name}`;
     }
   }
 
@@ -728,7 +875,7 @@
           <!-- Cabecera de Prioridad y Folio -->
           <div class="flex flex-wrap items-center justify-between gap-1.5 mb-2">
             <div class="flex items-center gap-1.5 sm:gap-2 flex-wrap">
-              <span class="font-mono text-xs font-bold text-primary">${incident.folio}</span>
+              <span class="font-mono text-xs font-bold text-primary">${escapeHtml(incident.folio)}</span>
               ${getPriorityBadge(incident.priorityLevel, incident.priorityLabel)}
             </div>
             ${statusBadges[incident.status] || ''}
@@ -737,15 +884,15 @@
           <!-- Título y Miniatura -->
           <div class="flex gap-3 items-start mt-1">
             <div class="flex-1 min-w-0">
-              <h3 class="text-sm font-bold text-on-surface leading-snug line-clamp-2">${incident.title}</h3>
+              <h3 class="text-sm font-bold text-on-surface leading-snug line-clamp-2">${escapeHtml(incident.title)}</h3>
               <p class="text-xs text-outline flex items-center gap-1 mt-1 truncate">
                 <span class="material-symbols-outlined text-[14px] shrink-0 text-primary">pin_drop</span>
-                <span class="truncate">${incident.address}</span>
+                <span class="truncate">${escapeHtml(incident.address)}</span>
               </p>
             </div>
             ${incident.image ? `
               <div class="w-14 h-14 rounded-xl overflow-hidden bg-surface-container shrink-0 shadow-sm">
-                <img src="${incident.image}" alt="Evidencia" class="w-full h-full object-cover">
+                <img src="${escapeHtml(incident.image)}" alt="Evidencia" class="w-full h-full object-cover">
               </div>
             ` : ''}
           </div>
@@ -756,12 +903,12 @@
           <div class="flex items-center justify-between text-on-surface-variant font-medium">
             <span class="flex items-center gap-1.5 truncate">
               <span class="material-symbols-outlined text-[15px] text-primary shrink-0">engineering</span>
-              <span class="truncate">${incident.assignedTeam || 'Sin cuadrilla asignada'}</span>
+              <span class="truncate">${escapeHtml(incident.assignedTeam || 'Sin cuadrilla asignada')}</span>
             </span>
           </div>
           <div class="text-[11px] text-outline flex items-center justify-between gap-2 pt-0.5">
-            <span class="truncate">Actor: <strong>${incident.reportedBy || 'Anónimo'}</strong></span>
-            <span class="capitalize text-primary font-bold shrink-0">(${incident.reportedByRole || 'invitado'})</span>
+            <span class="truncate">Actor: <strong>${escapeHtml(incident.reportedBy || 'Anónimo')}</strong></span>
+            <span class="capitalize text-primary font-bold shrink-0">(${escapeHtml(incident.reportedByRole || 'invitado')})</span>
           </div>
         </div>
 
@@ -769,9 +916,9 @@
         <div class="flex items-center justify-between pt-1 border-t border-outline-variant/10">
           <span class="text-[11px] text-outline flex items-center gap-1 truncate">
             <span class="material-symbols-outlined text-[13px] shrink-0">location_city</span>
-            <span class="truncate">${incident.sectorLabel || 'Sector'}</span>
+            <span class="truncate">${escapeHtml(incident.sectorLabel || 'Sector')}</span>
           </span>
-          <button class="btn-open-detail flex items-center gap-1 px-3 py-1.5 rounded-xl bg-surface-container text-primary text-xs font-bold hover:bg-surface-container-high transition-all active:scale-95 shrink-0" data-id="${incident.id}">
+          <button class="btn-open-detail flex items-center gap-1 px-3 py-1.5 rounded-xl bg-surface-container text-primary text-xs font-bold hover:bg-surface-container-high transition-all active:scale-95 shrink-0" data-id="${escapeHtml(incident.id)}">
             <span>Gestionar Triaje</span>
             <span class="material-symbols-outlined text-[14px]">chevron_right</span>
           </button>
@@ -814,6 +961,21 @@
     const grid = dom.vecinoIncidentsGrid;
     if (!grid) return;
 
+    // Inicializar el botón "Ver Expediente Completo" en la tarjeta por defecto (#CIV-8942 o el primero disponible)
+    if (dom.btnViewTrackedDetail && !dom.btnViewTrackedDetail.onclick && state.incidents.length > 0) {
+      const defaultTracked = state.incidents.find(i => i.id === 'CIV-8942') || state.incidents[0];
+      if (defaultTracked) {
+        if (dom.trackerResFolio) dom.trackerResFolio.textContent = defaultTracked.folio;
+        if (dom.trackerResStatus) dom.trackerResStatus.textContent = defaultTracked.statusLabel;
+        if (dom.trackerResPriority) dom.trackerResPriority.textContent = defaultTracked.priorityLabel || 'Prioridad Normal';
+        if (dom.trackerResTitle) dom.trackerResTitle.textContent = defaultTracked.title;
+        if (dom.trackerResAddress) {
+          dom.trackerResAddress.innerHTML = `<span class="material-symbols-outlined text-[14px] shrink-0">pin_drop</span> <span class="truncate">${escapeHtml(defaultTracked.address)} • Cuadrilla: ${escapeHtml(defaultTracked.assignedTeam || 'En despacho')}</span>`;
+        }
+        dom.btnViewTrackedDetail.onclick = () => openIncidentModal(defaultTracked.id);
+      }
+    }
+
     // Filtrar reportes recientes
     const recent = state.incidents.slice(0, 6);
     if (dom.vecinoReportCount) dom.vecinoReportCount.textContent = `${state.incidents.length} reportes en la comuna`;
@@ -822,23 +984,23 @@
       <div class="bg-surface-container-lowest rounded-2xl p-4 shadow-sm border border-outline-variant/20 flex flex-col justify-between gap-3">
         <div>
           <div class="flex items-center justify-between text-xs mb-1.5">
-            <span class="font-mono font-bold text-primary">${inc.folio}</span>
+            <span class="font-mono font-bold text-primary">${escapeHtml(inc.folio)}</span>
             <span class="px-2 py-0.5 rounded-full ${inc.status === 'resolved' ? 'bg-emerald-100 text-emerald-800' : 'bg-primary-fixed text-primary'} font-bold text-[10px]">
-              ${inc.statusLabel}
+              ${escapeHtml(inc.statusLabel)}
             </span>
           </div>
-          <h4 class="font-bold text-sm text-on-surface line-clamp-2">${inc.title}</h4>
+          <h4 class="font-bold text-sm text-on-surface line-clamp-2">${escapeHtml(inc.title)}</h4>
           <p class="text-xs text-outline flex items-center gap-1 mt-1 truncate">
             <span class="material-symbols-outlined text-[14px] text-primary shrink-0">pin_drop</span>
-            <span class="truncate">${inc.address}</span>
+            <span class="truncate">${escapeHtml(inc.address)}</span>
           </p>
         </div>
 
         <div class="flex items-center justify-between pt-2 border-t border-outline-variant/10 text-xs">
           <span class="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 font-bold text-[10px]">
-            ${inc.priorityLabel || 'Alta (Vecino)'}
+            ${escapeHtml(inc.priorityLabel || 'Alta (Vecino)')}
           </span>
-          <button onclick="window.civicApp.trackFolioNumber('${inc.id}')" class="text-primary font-bold hover:underline flex items-center gap-0.5 text-xs">
+          <button onclick="window.civicApp.trackFolioNumber('${escapeHtml(inc.id)}')" class="text-primary font-bold hover:underline flex items-center gap-0.5 text-xs">
             <span>Rastrear</span>
             <span class="material-symbols-outlined text-[14px]">arrow_forward</span>
           </button>
@@ -874,14 +1036,21 @@
       return;
     }
 
+    if (folioInput && dom.folioInput) {
+      dom.folioInput.value = found.folio || `#${found.id}`;
+    }
+
     // Actualizar caja de resultados
     if (dom.trackerResFolio) dom.trackerResFolio.textContent = found.folio;
     if (dom.trackerResStatus) dom.trackerResStatus.textContent = found.statusLabel;
     if (dom.trackerResPriority) dom.trackerResPriority.textContent = found.priorityLabel || 'Prioridad Normal';
     if (dom.trackerResTitle) dom.trackerResTitle.textContent = found.title;
-    if (dom.trackerResAddress) dom.trackerResAddress.innerHTML = `<span class="material-symbols-outlined text-[14px] shrink-0">pin_drop</span> <span class="truncate">${found.address} • Cuadrilla: ${found.assignedTeam || 'En despacho'}</span>`;
+    if (dom.trackerResAddress) dom.trackerResAddress.innerHTML = `<span class="material-symbols-outlined text-[14px] shrink-0">pin_drop</span> <span class="truncate">${escapeHtml(found.address)} • Cuadrilla: ${escapeHtml(found.assignedTeam || 'En despacho')}</span>`;
 
-    if (dom.folioResultBox) dom.folioResultBox.classList.remove('hidden');
+    if (dom.folioResultBox) {
+      dom.folioResultBox.classList.remove('hidden');
+      dom.folioResultBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
     if (dom.btnViewTrackedDetail) dom.btnViewTrackedDetail.onclick = () => openIncidentModal(found.id);
 
     showToast(`Folio ${found.folio} localizado exitosamente`, 'success');
@@ -920,14 +1089,14 @@
           <span class="material-symbols-outlined text-error text-[20px] mt-0.5 shrink-0">bolt</span>
           <div class="flex flex-col min-w-0">
             <div class="flex items-center gap-2 flex-wrap">
-              <span class="font-mono text-xs font-bold text-on-surface">${inc.folio}</span>
-              <span class="px-2 py-0.5 rounded-full bg-error text-on-error font-bold text-[10px]">Urgente / Prioridad ${inc.priorityLevel}</span>
-              <span class="text-xs font-bold text-on-surface truncate">${inc.title}</span>
+              <span class="font-mono text-xs font-bold text-on-surface">${escapeHtml(inc.folio)}</span>
+              <span class="px-2 py-0.5 rounded-full bg-error text-on-error font-bold text-[10px]">Urgente / Prioridad ${escapeHtml(inc.priorityLevel)}</span>
+              <span class="text-xs font-bold text-on-surface truncate">${escapeHtml(inc.title)}</span>
             </div>
-            <span class="text-xs text-on-surface-variant truncate mt-0.5">${inc.address} • Reportado por: ${inc.reportedBy}</span>
+            <span class="text-xs text-on-surface-variant truncate mt-0.5">${escapeHtml(inc.address)} • Reportado por: ${escapeHtml(inc.reportedBy)}</span>
           </div>
         </div>
-        <button onclick="window.civicApp.openModerationFor('${inc.id}')" class="w-full sm:w-auto justify-center px-3.5 py-2 sm:py-1.5 rounded-lg bg-primary text-on-primary font-bold text-xs shrink-0 shadow-sm hover:bg-primary-container transition-all flex items-center gap-1">
+        <button onclick="window.civicApp.openModerationFor('${escapeHtml(inc.id)}')" class="w-full sm:w-auto justify-center px-3.5 py-2 sm:py-1.5 rounded-lg bg-primary text-on-primary font-bold text-xs shrink-0 shadow-sm hover:bg-primary-container transition-all flex items-center gap-1">
           <span class="material-symbols-outlined text-[15px]">rate_review</span>
           <span>Moderar Ahora</span>
         </button>
@@ -963,23 +1132,23 @@
       return `
       <tr class="hover:bg-surface-container-low transition-colors">
         <td class="py-3 px-3">
-          <div class="font-bold text-on-surface">${u.name}</div>
-          <div class="text-[11px] text-outline">${u.email}</div>
+          <div class="font-bold text-on-surface">${escapeHtml(u.name)}</div>
+          <div class="text-[11px] text-outline">${escapeHtml(u.email)}</div>
         </td>
-        <td class="py-3 px-3 font-mono text-[11px]">${u.rutDni || 'N/A'}</td>
+        <td class="py-3 px-3 font-mono text-[11px]">${escapeHtml(u.rutDni || 'N/A')}</td>
         <td class="py-3 px-3">
           <span class="px-2 py-0.5 rounded-full font-bold text-[10px] ${u.role === 'admin' ? 'bg-red-100 text-red-800' : (u.role === 'trabajador' ? 'bg-blue-100 text-blue-800' : 'bg-emerald-100 text-emerald-800')}">
-            ${u.role}
+            ${escapeHtml(u.role)}
           </span>
         </td>
-        <td class="py-3 px-3">${u.department || 'Comuna'}</td>
+        <td class="py-3 px-3">${escapeHtml(u.department || 'Comuna')}</td>
         <td class="py-3 px-3">
           <span class="px-2 py-0.5 rounded-full font-bold text-[10px] ${u.status === 'active' ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'}">
             ${u.status === 'active' ? 'Activo' : 'Suspendido'}
           </span>
         </td>
         <td class="py-3 px-3 text-right">
-          <button type="button" onclick="window.civicApp.openUserActionsMenu(event, ${u.id})" class="user-actions-btn inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surface-container hover:bg-surface-container-high text-on-surface font-semibold text-xs border border-outline-variant/30 shadow-sm transition-all active:scale-95" title="Opciones de cuenta">
+          <button type="button" onclick="window.civicApp.openUserActionsMenu(event, ${Number(u.id)})" class="user-actions-btn inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surface-container hover:bg-surface-container-high text-on-surface font-semibold text-xs border border-outline-variant/30 shadow-sm transition-all active:scale-95" title="Opciones de cuenta">
             <span class="material-symbols-outlined text-[15px] text-primary">tune</span>
             <span>Opciones</span>
             <span class="material-symbols-outlined text-[13px] text-outline">expand_more</span>
@@ -1184,6 +1353,8 @@
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
+          'x-user-id': String(state.currentUser.id || ''),
+          'x-user-email': state.currentUser.email || '',
           'x-user-role': state.currentUser.role,
           'x-user-name': state.currentUser.name
         },
@@ -1201,6 +1372,7 @@
         state.currentUser.name = json.data.name;
         state.currentUser.email = json.data.email;
         state.currentUser.role = json.data.role;
+        saveSessionUser(state.currentUser);
         renderNavForRole(state.currentUser.role);
       }
 
@@ -1277,16 +1449,25 @@
     if (dom.changePwdUserEmail) dom.changePwdUserEmail.textContent = userEmail || '';
 
     const isSelf = state.currentUser && state.currentUser.email === userEmail;
+    const isAdminResettingOther = state.currentUser && state.currentUser.role === 'admin' && !isSelf && Boolean(userId);
     if (dom.changePwdTitle) {
       dom.changePwdTitle.textContent = isSelf ? 'Cambiar Mi Contraseña' : `Cambiar Clave: ${userName}`;
     }
 
+    if (dom.currentPasswordGroup) {
+      dom.currentPasswordGroup.classList.toggle('hidden', isAdminResettingOther);
+    }
+    if (dom.inputCurrentPassword) dom.inputCurrentPassword.value = '';
     if (dom.inputNewPassword) dom.inputNewPassword.value = '';
     if (dom.inputConfirmPassword) dom.inputConfirmPassword.value = '';
 
     dom.modalChangePassword.classList.remove('hidden');
     dom.modalChangePassword.classList.add('flex');
-    if (dom.inputNewPassword) dom.inputNewPassword.focus();
+    if (!isAdminResettingOther && dom.inputCurrentPassword) {
+      dom.inputCurrentPassword.focus();
+    } else if (dom.inputNewPassword) {
+      dom.inputNewPassword.focus();
+    }
   }
 
   function openChangeMyPasswordModal() {
@@ -1307,6 +1488,7 @@
     if (!dom.modalChangePassword) return;
     dom.modalChangePassword.classList.add('hidden');
     dom.modalChangePassword.classList.remove('flex');
+    if (dom.inputCurrentPassword) dom.inputCurrentPassword.value = '';
     if (dom.inputNewPassword) dom.inputNewPassword.value = '';
     if (dom.inputConfirmPassword) dom.inputConfirmPassword.value = '';
   }
@@ -1316,8 +1498,18 @@
 
     const targetId = dom.changePwdTargetId ? dom.changePwdTargetId.value : '';
     const targetEmail = dom.changePwdTargetEmail ? dom.changePwdTargetEmail.value : '';
+    const currentPassword = dom.inputCurrentPassword ? dom.inputCurrentPassword.value.trim() : '';
     const newPassword = dom.inputNewPassword ? dom.inputNewPassword.value.trim() : '';
     const confirmPassword = dom.inputConfirmPassword ? dom.inputConfirmPassword.value.trim() : '';
+
+    const isSelf = state.currentUser && state.currentUser.email === targetEmail;
+    const isAdminResettingOther = state.currentUser && state.currentUser.role === 'admin' && !isSelf && Boolean(targetId);
+
+    if (!isAdminResettingOther && !currentPassword) {
+      showToast('Debes ingresar tu contraseña actual para confirmar el cambio', 'error');
+      if (dom.inputCurrentPassword) dom.inputCurrentPassword.focus();
+      return;
+    }
 
     if (!newPassword || newPassword.length < 4) {
       showToast('La nueva contraseña debe tener al menos 4 caracteres', 'error');
@@ -1343,7 +1535,7 @@
 
     try {
       let res;
-      if (targetId && state.currentUser.role === 'admin') {
+      if (isAdminResettingOther) {
         res = await fetch(`/api/admin/users/${targetId}/password`, {
           method: 'PATCH',
           headers: {
@@ -1363,7 +1555,7 @@
             'x-user-name': state.currentUser.name,
             'x-user-email': state.currentUser.email
           },
-          body: JSON.stringify({ email: targetEmail, newPassword })
+          body: JSON.stringify({ email: targetEmail, currentPassword, newPassword })
         });
       }
 
@@ -1411,16 +1603,16 @@
     list.innerHTML = state.incidents.map(inc => {
       const isSelected = state.selectedModerationId === inc.id;
       return `
-      <div class="p-3.5 sm:p-4 rounded-xl border ${isSelected ? 'border-primary ring-2 ring-primary/30 bg-primary/5' : 'border-outline-variant/20 bg-surface-container-lowest hover:border-primary/50'} shadow-sm flex items-center justify-between gap-2.5 sm:gap-3 cursor-pointer transition-all hover:shadow-md" onclick="window.civicApp.openModerationFor('${inc.id}')">
+      <div class="p-3.5 sm:p-4 rounded-xl border ${isSelected ? 'border-primary ring-2 ring-primary/30 bg-primary/5' : 'border-outline-variant/20 bg-surface-container-lowest hover:border-primary/50'} shadow-sm flex items-center justify-between gap-2.5 sm:gap-3 cursor-pointer transition-all hover:shadow-md" onclick="window.civicApp.openModerationFor('${escapeHtml(inc.id)}')">
         <div class="min-w-0">
           <div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
-            <span class="font-mono text-xs font-bold text-primary">${inc.folio}</span>
+            <span class="font-mono text-xs font-bold text-primary">${escapeHtml(inc.folio)}</span>
             <span class="px-2 py-0.5 rounded-full bg-surface-container text-on-surface-variant font-bold text-[10px]">
-              Prioridad ${inc.priorityLevel} (${inc.priorityLabel})
+              Prioridad ${escapeHtml(inc.priorityLevel)} (${escapeHtml(inc.priorityLabel)})
             </span>
           </div>
-          <h4 class="font-bold text-sm text-on-surface truncate mt-1">${inc.title}</h4>
-          <p class="text-xs text-outline truncate">${inc.address}</p>
+          <h4 class="font-bold text-sm text-on-surface truncate mt-1">${escapeHtml(inc.title)}</h4>
+          <p class="text-xs text-outline truncate">${escapeHtml(inc.address)}</p>
         </div>
         <div class="flex items-center gap-1 shrink-0 ${isSelected ? 'bg-primary text-on-primary' : 'bg-primary/10 text-primary'} font-bold text-xs px-2.5 py-1.5 rounded-lg transition-all">
           <span class="material-symbols-outlined text-[16px]">edit</span>
@@ -1447,6 +1639,7 @@
     }
     if (dom.modIncidentId) dom.modIncidentId.value = inc.id;
     if (dom.modFolioTag) dom.modFolioTag.textContent = `${inc.folio} • ${inc.categoryLabel || ''}`;
+    if (dom.modCategory) dom.modCategory.value = inc.category || 'vialidad';
     if (dom.modPriorityLevel) dom.modPriorityLevel.value = String(inc.priorityLevel || '1');
     if (dom.modAssignedTeam) dom.modAssignedTeam.value = inc.assignedTeam || '';
     if (dom.modTitle) dom.modTitle.value = inc.title || '';
@@ -1454,12 +1647,10 @@
 
     renderAdminModerationList();
 
-    // Desplazar siempre al editor de forma consistente (compensando el header fijo)
+    // Desplazar siempre al editor dentro del contenedor con scroll (#main-scroll-container)
     if (dom.adminEditPanel) {
       requestAnimationFrame(() => {
-        const headerOffset = 72;
-        const top = dom.adminEditPanel.getBoundingClientRect().top + window.scrollY - headerOffset;
-        window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
+        dom.adminEditPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
       });
     }
     showToast(`Editando reporte ${inc.folio}`, 'info');
@@ -1472,6 +1663,7 @@
     }
     if (dom.modIncidentId) dom.modIncidentId.value = '';
     if (dom.modFolioTag) dom.modFolioTag.textContent = 'Selecciona un reporte';
+    if (dom.modCategory) dom.modCategory.value = 'vialidad';
     if (dom.modPriorityLevel) dom.modPriorityLevel.value = '1';
     if (dom.modAssignedTeam) dom.modAssignedTeam.value = '';
     if (dom.modTitle) dom.modTitle.value = '';
@@ -1481,7 +1673,13 @@
 
   async function loadAdminSettings() {
     try {
-      const res = await fetch('/api/admin/settings');
+      const res = await fetch('/api/admin/settings', {
+        headers: {
+          'x-user-role': state.currentUser.role,
+          'x-user-name': state.currentUser.name,
+          'x-user-email': state.currentUser.email || ''
+        }
+      });
       if (!res.ok) return;
       const json = await res.json();
       const s = json.data || {};
@@ -1504,6 +1702,7 @@
       return;
     }
 
+    const category = dom.modCategory ? dom.modCategory.value : undefined;
     const priorityLevel = parseInt(dom.modPriorityLevel.value, 10);
     const assignedTeam = dom.modAssignedTeam.value.trim();
     const title = dom.modTitle.value.trim();
@@ -1517,7 +1716,7 @@
           'x-user-role': state.currentUser.role,
           'x-user-name': state.currentUser.name
         },
-        body: JSON.stringify({ priorityLevel, assignedTeam, title, description })
+        body: JSON.stringify({ category, priorityLevel, assignedTeam, title, description })
       });
 
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -1533,7 +1732,13 @@
 
   async function loadAuditLogs() {
     try {
-      const res = await fetch('/api/admin/audit-logs');
+      const res = await fetch('/api/admin/audit-logs', {
+        headers: {
+          'x-user-role': state.currentUser.role,
+          'x-user-name': state.currentUser.name,
+          'x-user-email': state.currentUser.email || ''
+        }
+      });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const json = await res.json();
       state.auditLogs = json.data || [];
@@ -1548,6 +1753,14 @@
     if (!tbody) return;
 
     if (dom.auditStatEvents) dom.auditStatEvents.textContent = `${state.auditLogs.length} logs`;
+    if (dom.auditStatAdminActions) {
+      const adminActionsCount = state.auditLogs.filter(l => l.actor_role === 'admin' || (l.action && (l.action.startsWith('ADMIN_') || l.action.startsWith('MODERACIÓN') || l.action.startsWith('CAMBIO_CONFIG') || l.action.startsWith('ELIMINAR_')))).length;
+      dom.auditStatAdminActions.textContent = String(adminActionsCount);
+    }
+    if (dom.auditStatAuthEvents) {
+      const authEventsCount = state.auditLogs.filter(l => l.action && (l.action.includes('LOGIN') || l.action.includes('LOGOUT') || l.action.includes('PASSWORD') || l.action.includes('CLAVE') || l.action.includes('REGISTRO') || l.action.includes('USUARIO'))).length;
+      dom.auditStatAuthEvents.textContent = String(authEventsCount);
+    }
 
     if (state.auditLogs.length === 0) {
       tbody.innerHTML = `<tr><td colspan="5" class="py-6 text-center text-outline">No hay eventos registrados en la bitácora</td></tr>`;
@@ -1566,11 +1779,11 @@
 
       return `
       <tr class="hover:bg-surface-container-low transition-colors">
-        <td class="py-2.5 px-3 text-outline text-[11px] whitespace-nowrap">${formattedDate}</td>
-        <td class="py-2.5 px-3 font-bold text-primary whitespace-nowrap">${log.action}</td>
-        <td class="py-2.5 px-3 whitespace-nowrap">${log.actor_name}</td>
-        <td class="py-2.5 px-3 whitespace-nowrap"><span class="px-1.5 py-0.5 rounded bg-surface-container text-[10px] font-bold">${log.actor_role}</span></td>
-        <td class="py-2.5 px-3 text-on-surface-variant">${log.target_info || '-'}</td>
+        <td class="py-2.5 px-3 text-outline text-[11px] whitespace-nowrap">${escapeHtml(formattedDate)}</td>
+        <td class="py-2.5 px-3 font-bold text-primary whitespace-nowrap">${escapeHtml(log.action)}</td>
+        <td class="py-2.5 px-3 whitespace-nowrap">${escapeHtml(log.actor_name)}</td>
+        <td class="py-2.5 px-3 whitespace-nowrap"><span class="px-1.5 py-0.5 rounded bg-surface-container text-[10px] font-bold">${escapeHtml(log.actor_role)}</span></td>
+        <td class="py-2.5 px-3 text-on-surface-variant">${escapeHtml(log.target_info || '-')}</td>
       </tr>
       `;
     }).join('');
@@ -1716,6 +1929,12 @@
   async function handleFormSubmit(e) {
     if (e && e.preventDefault) e.preventDefault();
 
+    // Si el usuario presiona Enter en los pasos 1 o 2, avanzar de paso en vez de enviar prematuramente
+    if (state.currentFormStep === 1) {
+      setFormStep(2);
+      return;
+    }
+
     const titleInput = document.getElementById('input-title');
     const addressInput = document.getElementById('input-address');
     const sectorInput = document.getElementById('select-sector');
@@ -1745,6 +1964,11 @@
       showToast('Por favor completa el título y la dirección en el Paso 2', 'error');
       if (!title && titleInput) titleInput.focus();
       else if (!address && addressInput) addressInput.focus();
+      return;
+    }
+
+    if (state.currentFormStep === 2) {
+      setFormStep(3);
       return;
     }
 
@@ -1791,6 +2015,7 @@
       if (dom.form) dom.form.reset();
       removeCustomPhoto();
       setFormStep(1);
+      applySystemPrefs();
       await loadIncidents();
 
       // Mostrar comprobante oficial de éxito
@@ -1830,14 +2055,14 @@
 
     layer.innerHTML = pins.map(inc => {
       const c = colors[inc.category] || 'bg-primary text-white';
-      const x = inc.coordinates?.x || 50;
-      const y = inc.coordinates?.y || 50;
+      const x = Number(inc.coordinates?.x) || 50;
+      const y = Number(inc.coordinates?.y) || 50;
 
       return `
-        <div class="map-pin" style="left: ${x}%; top: ${y}%;" data-id="${inc.id}" title="${inc.folio}: ${inc.title}">
+        <div class="map-pin" style="left: ${x}%; top: ${y}%;" data-id="${escapeHtml(inc.id)}" title="${escapeHtml(inc.folio)}: ${escapeHtml(inc.title)}">
           <div class="map-pin-pulse ${c}"></div>
           <div class="w-8 h-8 rounded-full ${c} shadow-lg flex items-center justify-center font-bold text-xs ring-2 ring-white">
-            <span class="material-symbols-outlined text-[16px]">${inc.categoryIcon || 'pin_drop'}</span>
+            <span class="material-symbols-outlined text-[16px]">${escapeHtml(inc.categoryIcon || 'pin_drop')}</span>
           </div>
         </div>
       `;
@@ -1845,6 +2070,8 @@
 
     layer.querySelectorAll('.map-pin').forEach(pin => {
       pin.addEventListener('click', () => {
+        layer.querySelectorAll('.map-pin.active').forEach(p => p.classList.remove('active'));
+        pin.classList.add('active');
         const id = pin.getAttribute('data-id');
         const inc = state.incidents.find(i => i.id === id);
         if (inc) showMapPreview(inc);
@@ -1857,7 +2084,7 @@
     dom.previewFolio.textContent = inc.folio;
     dom.previewStatus.textContent = inc.statusLabel;
     dom.previewTitle.textContent = inc.title;
-    dom.previewAddress.innerHTML = `<span class="material-symbols-outlined text-[14px]">pin_drop</span><span>${inc.address}</span>`;
+    dom.previewAddress.innerHTML = `<span class="material-symbols-outlined text-[14px]">pin_drop</span><span>${escapeHtml(inc.address)}</span>`;
     dom.mapIncidentPreview.classList.remove('hidden');
 
     dom.mapIncidentPreview.onclick = (e) => {
@@ -1877,11 +2104,16 @@
 
     dom.modalFolio.textContent = incident.folio;
     dom.modalTitle.textContent = incident.title;
-    dom.modalAddress.innerHTML = `<span class="material-symbols-outlined text-[16px] text-primary">pin_drop</span><span>${incident.address} (${incident.sectorLabel})</span>`;
+    dom.modalAddress.innerHTML = `<span class="material-symbols-outlined text-[16px] text-primary">pin_drop</span><span>${escapeHtml(incident.address)} (${escapeHtml(incident.sectorLabel)})</span>`;
     dom.modalDesc.textContent = incident.description || 'Sin descripción adicional reportada.';
     dom.modalReportedBy.textContent = `${incident.reportedBy || 'Vecino'} (${incident.reportedByRole || 'invitado'})`;
     dom.modalChannel.textContent = incident.channelLabel || 'Digital';
     dom.modalStatusBadge.textContent = incident.statusLabel;
+
+    const urgencyLabels = { low: 'Baja', medium: 'Media', high: 'Alta / Crítica' };
+    if (dom.modalCategory) dom.modalCategory.textContent = incident.categoryLabel || incident.category || 'General';
+    if (dom.modalUrgency) dom.modalUrgency.textContent = urgencyLabels[incident.urgency] || incident.urgency || 'Media';
+    if (dom.modalAssignedTeam) dom.modalAssignedTeam.textContent = incident.assignedTeam || 'En despacho';
 
     if (dom.modalPriorityBadge) {
       dom.modalPriorityBadge.textContent = `Nivel ${incident.priorityLevel}: ${incident.priorityLabel}`;
@@ -1894,6 +2126,17 @@
       dom.modalImg.src = '';
       dom.modalImg.parentElement.classList.add('hidden');
     }
+
+    // Resaltar estado activo en los botones de cambio de estado
+    dom.btnChangeStatus.forEach(btn => {
+      const btnStatus = btn.getAttribute('data-new-status');
+      const isCurrent = btnStatus === incident.status;
+      btn.disabled = isCurrent;
+      btn.classList.toggle('ring-2', isCurrent);
+      btn.classList.toggle('ring-primary', isCurrent);
+      btn.classList.toggle('opacity-60', isCurrent);
+      btn.classList.toggle('cursor-default', isCurrent);
+    });
 
     // Solo personal municipal o super admin pueden cambiar de estado operativo
     if (state.currentUser.role === 'trabajador' || state.currentUser.role === 'admin') {
@@ -1966,7 +2209,7 @@
         return `
           <div>
             <div class="flex items-center justify-between text-xs font-semibold mb-1 text-on-surface">
-              <span>${catLabels[k] || k}</span>
+              <span>${escapeHtml(catLabels[k] || k)}</span>
               <span class="text-outline font-mono">${count} (${pct}%)</span>
             </div>
             <div class="w-full bg-surface-container h-2 rounded-full overflow-hidden">
@@ -1985,14 +2228,8 @@
     const previousName = state.currentUser ? state.currentUser.name : 'Usuario';
 
     // 1. Reestablecer estado local a invitado inmediatamente
-    state.currentUser = {
-      id: 0,
-      name: 'Vecino Invitado',
-      email: 'invitado@comuna.cl',
-      role: 'invitado',
-      rutDni: 'Sin DNI',
-      department: 'Comunidad'
-    };
+    state.currentUser = { ...GUEST_USER };
+    saveSessionUser(state.currentUser);
 
     // 2. Cerrar cualquier modal abierto y limpiar credenciales del formulario
     closeAuthModal();
@@ -2035,6 +2272,7 @@
       const json = await res.json();
 
       state.currentUser = json.user;
+      saveSessionUser(state.currentUser);
       closeAuthModal();
       showToast(`Sesión activa: ${state.currentUser.name} (${state.currentUser.role})`, 'success');
 
@@ -2071,6 +2309,7 @@
       }
 
       state.currentUser = json.user;
+      saveSessionUser(state.currentUser);
       closeAuthModal();
       clearAuthLoginForm();
 
@@ -2191,6 +2430,7 @@
       }
 
       state.currentUser = json.user;
+      saveSessionUser(state.currentUser);
       closeAuthModal();
       clearAuthLoginForm();
 
@@ -2322,7 +2562,11 @@
     try {
       const res = await fetch('/api/auth/google/config', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-role': state.currentUser.role,
+          'x-user-name': state.currentUser.name
+        },
         body: JSON.stringify({ clientId })
       });
 
@@ -2366,6 +2610,7 @@
       }
 
       state.currentUser = json.user;
+      saveSessionUser(state.currentUser);
       closeAuthModal();
       closeGoogleConfigModal();
       clearAuthLoginForm();
@@ -2666,36 +2911,43 @@
     }
 
     try {
-      if (state.currentUser.id) {
-        const res = await fetch(`/api/admin/users/${state.currentUser.id}`, {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-user-role': state.currentUser.role,
-            'x-user-name': state.currentUser.name
-          },
-          body: JSON.stringify({
-            name,
-            email,
-            rutDni: rutDni || 'Sin DNI',
-            role: state.currentUser.role,
-            department: department || 'Comunidad'
-          })
-        });
-        if (res.ok) {
-          const json = await res.json();
-          if (json.data) state.currentUser = { ...state.currentUser, ...json.data };
-        }
+      const res = await fetch('/api/auth/profile', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-id': String(state.currentUser.id || ''),
+          'x-user-email': state.currentUser.email || '',
+          'x-user-role': state.currentUser.role,
+          'x-user-name': state.currentUser.name
+        },
+        body: JSON.stringify({
+          id: state.currentUser.id,
+          name,
+          email,
+          rutDni: rutDni || 'Sin DNI',
+          department: department || 'Comunidad'
+        })
+      });
+
+      const json = await res.json();
+      if (!res.ok) {
+        showToast(json.message || 'No se pudieron actualizar tus datos en el servidor', 'error');
+        return;
       }
 
-      state.currentUser.name = name;
-      state.currentUser.email = email;
-      state.currentUser.rutDni = rutDni || 'Sin DNI';
-      state.currentUser.department = department || 'Comunidad';
+      if (json.data) {
+        state.currentUser = { ...state.currentUser, ...json.data };
+      } else {
+        state.currentUser.name = name;
+        state.currentUser.email = email;
+        state.currentUser.rutDni = rutDni || 'Sin DNI';
+        state.currentUser.department = department || 'Comunidad';
+      }
 
+      saveSessionUser(state.currentUser);
       renderNavForRole(state.currentUser.role);
       syncSettingsAccountTab();
-      showToast('Tus datos de perfil se han actualizado', 'success');
+      showToast('Tus datos de perfil se han actualizado en la base de datos', 'success');
     } catch (err) {
       console.error('Error al actualizar perfil:', err);
       showToast('Error al guardar tus datos de perfil', 'error');
@@ -2709,10 +2961,18 @@
       return;
     }
 
+    const currentPwdEl = document.getElementById('settings-current-pwd');
     const newPwdEl = document.getElementById('settings-new-pwd');
     const confirmPwdEl = document.getElementById('settings-confirm-pwd');
+    const currentPassword = currentPwdEl ? currentPwdEl.value.trim() : '';
     const newPassword = newPwdEl ? newPwdEl.value.trim() : '';
     const confirmPassword = confirmPwdEl ? confirmPwdEl.value.trim() : '';
+
+    if (!currentPassword) {
+      showToast('Debes ingresar tu contraseña actual', 'error');
+      if (currentPwdEl) currentPwdEl.focus();
+      return;
+    }
 
     if (newPassword.length < 4) {
       showToast('La contraseña debe tener al menos 4 caracteres', 'error');
@@ -2733,7 +2993,7 @@
           'x-user-name': state.currentUser.name,
           'x-user-email': state.currentUser.email
         },
-        body: JSON.stringify({ email: state.currentUser.email, newPassword })
+        body: JSON.stringify({ email: state.currentUser.email, currentPassword, newPassword })
       });
 
       const json = await res.json();
@@ -2742,6 +3002,7 @@
         return;
       }
 
+      if (currentPwdEl) currentPwdEl.value = '';
       if (newPwdEl) newPwdEl.value = '';
       if (confirmPwdEl) confirmPwdEl.value = '';
       showToast('¡Tu contraseña ha sido actualizada con éxito!', 'success');
@@ -2787,7 +3048,7 @@
     toast.className = `px-4 py-3 rounded-2xl shadow-xl font-medium text-xs flex items-center gap-2.5 transform transition-all duration-300 translate-y-2 opacity-0 pointer-events-auto border border-white/20 ${colors[type] || colors.info}`;
     toast.innerHTML = `
       <span class="material-symbols-outlined text-[18px]">${type === 'success' ? 'check_circle' : (type === 'error' ? 'error' : 'info')}</span>
-      <span>${message}</span>
+      <span>${escapeHtml(message)}</span>
     `;
 
     dom.toastContainer.appendChild(toast);
@@ -3078,14 +3339,6 @@
 
     if (dom.form) dom.form.addEventListener('submit', handleFormSubmit);
 
-    // Disparador directo del botón de envío final (evita problemas de eventos en móviles)
-    const btnSubmitForm = document.getElementById('btn-submit-form');
-    if (btnSubmitForm) {
-      btnSubmitForm.addEventListener('click', (e) => {
-        handleFormSubmit(e);
-      });
-    }
-
     // Botones del Modal de Comprobante / Éxito
     const btnSuccessNew = document.getElementById('btn-success-new-report');
     if (btnSuccessNew) {
@@ -3093,6 +3346,8 @@
         closeReportSuccessModal();
         setFormStep(1);
         switchView('view-nuevo');
+        const mainScroll = document.getElementById('main-scroll-container');
+        if (mainScroll) mainScroll.scrollTo({ top: 0, behavior: 'smooth' });
         window.scrollTo({ top: 0, behavior: 'smooth' });
       });
     }
@@ -3166,6 +3421,9 @@
       dom.btnCloseMapPreview.addEventListener('click', (e) => {
         e.stopPropagation();
         dom.mapIncidentPreview.classList.add('hidden');
+        if (dom.mapPinsLayer) {
+          dom.mapPinsLayer.querySelectorAll('.map-pin.active').forEach(p => p.classList.remove('active'));
+        }
       });
     }
 
@@ -3185,8 +3443,17 @@
         closeReportSuccessModal();
         closeChangePasswordModal();
         closeSystemSettingsModal();
+        closeEditUserModal();
+        closeUserActionsMenu();
       }
     });
+
+    const modalEditUser = document.getElementById('modal-edit-user');
+    if (modalEditUser) {
+      modalEditUser.addEventListener('click', (e) => {
+        if (e.target === modalEditUser) closeEditUserModal();
+      });
+    }
 
     // Eventos del Modal de Cambio de Contraseña
     if (dom.formChangePassword) dom.formChangePassword.addEventListener('submit', handleChangePasswordSubmit);
@@ -3268,6 +3535,14 @@
             },
             body: JSON.stringify({ key: 'sla_hours', value: sla })
           });
+
+          applyMunicipalitySettings({
+            municipality_name: municipality,
+            emergency_phone: phone,
+            sla_hours: sla
+          });
+          await loadAuditLogs();
+          await loadStats();
 
           showToast('Parámetros de la plataforma actualizados', 'success');
         } catch (err) {
@@ -3356,12 +3631,12 @@
 
     const total = state.incidents.length;
     const resolved = state.incidents.filter(i => i.status === 'resolved').length;
-    const inProgress = state.incidents.filter(i => i.status === 'in_progress').length;
+    const inProgress = state.incidents.filter(i => i.status === 'progress').length;
     const rate = total > 0 ? Math.round(((resolved + (inProgress * 0.5)) / total) * 100) : 94;
 
-    if (totalEl) totalEl.textContent = total || '48+';
-    if (inProgressEl) inProgressEl.textContent = inProgress || '12';
-    if (resolvedEl) resolvedEl.textContent = resolved || '36';
+    if (totalEl) totalEl.textContent = total > 0 ? String(total) : '0';
+    if (inProgressEl) inProgressEl.textContent = total > 0 ? String(inProgress) : '0';
+    if (resolvedEl) resolvedEl.textContent = total > 0 ? String(resolved) : '0';
     if (rateEl) rateEl.textContent = `${rate}%`;
   }
 
@@ -3412,14 +3687,14 @@
 
       if (folioEl) folioEl.textContent = found.folio || `#${found.id}`;
       if (titleEl) titleEl.textContent = found.title;
-      if (addressEl) addressEl.innerHTML = `<span class="material-symbols-outlined text-[15px] shrink-0">pin_drop</span> <span>${found.address || 'Comuna Central'} • Cuadrilla: ${found.assignedTeam || 'En despacho'}</span>`;
+      if (addressEl) addressEl.innerHTML = `<span class="material-symbols-outlined text-[15px] shrink-0">pin_drop</span> <span>${escapeHtml(found.address || 'Comuna Central')} • Cuadrilla: ${escapeHtml(found.assignedTeam || 'En despacho')}</span>`;
       if (dateEl) dateEl.textContent = found.createdAt ? new Date(found.createdAt).toLocaleDateString('es-CL', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Reciente';
 
       if (statusPill) {
         if (found.status === 'resolved') {
           statusPill.className = 'px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 flex items-center gap-1.5';
           statusPill.innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-500"></span> Resuelto';
-        } else if (found.status === 'in_progress') {
+        } else if (found.status === 'progress') {
           statusPill.className = 'px-3 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-800 dark:bg-blue-950/60 dark:text-blue-300 flex items-center gap-1.5';
           statusPill.innerHTML = '<span class="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span> En Cuadrilla / Proceso';
         } else {
@@ -3442,6 +3717,11 @@
       switchView('view-inicio');
     }
     setTimeout(() => {
+      document.querySelectorAll('#view-inicio .cc-scroll-item').forEach(item => {
+        item.dataset.forceVisible = 'true';
+        item.classList.add('cc-scroll-visible');
+        item.classList.remove('cc-scroll-hidden');
+      });
       const el = document.getElementById('seccion-rastreo-inicio');
       if (el) {
         el.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -3504,6 +3784,7 @@
     renderNavForRole(state.currentUser.role);
     switchView(ROLE_PERMISSIONS[state.currentUser.role].defaultView);
     loadIncidents();
+    loadGoogleAuthConfig();
   }
 
   if (document.readyState === 'loading') {

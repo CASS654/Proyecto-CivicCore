@@ -325,48 +325,6 @@ function calculatePriority(role) {
   return ROLE_PRIORITY[role] || ROLE_PRIORITY.invitado;
 }
 
-function createIncident(data, user = { role: 'invitado', name: 'Vecino Anónimo' }) {
-  // Cálculo de siguiente folio garantizando que no existan colisiones con registros existentes
-  const allIds = db.prepare("SELECT id FROM incidents WHERE id LIKE 'CIV-%'").all();
-  let maxNum = 8950;
-  allIds.forEach(row => {
-    const m = (row.id || '').match(/CIV-(\d+)/i);
-    if (m) {
-      const n = parseInt(m[1], 10);
-      if (n > maxNum) maxNum = n;
-    }
-  });
-  const nextNum = maxNum + 1;
-  const id = `CIV-${nextNum}`;
-  const folio = `#${id}`;
-
-  const cat = CATEGORY_MAP[data.category] || { label: 'General', icon: 'assignment' };
-  const sectorLabel = SECTOR_MAP[data.sector] || 'Comuna Central';
-  const now = new Date().toISOString();
-
-  const coords = data.coordinates || {
-    x: Math.floor(Math.random() * 60) + 20,
-    y: Math.floor(Math.random() * 60) + 20
-  };
-
-  const role = user.role || 'invitado';
-  const priority = calculatePriority(role);
-  const isVerified = (role === 'vecino' || role === 'trabajador' || role === 'admin') ? 1 : 0;
-
-  const insertStmt = db.prepare(`
-    INSERT INTO incidents (
-      id, folio, title, description, category, category_label, category_icon,
-      status, status_label, urgency, urgency_label, channel, channel_label,
-      address, sector, sector_label, reported_by, reported_by_role, priority_level, priority_label,
-      is_verified, assigned_team, image_url, coord_x, coord_y, created_at, updated_at
-    ) VALUES (
-      ?, ?, ?, ?, ?, ?, ?,
-      ?, ?, ?, ?, ?, ?,
-      ?, ?, ?, ?, ?, ?, ?,
-      ?, ?, ?, ?, ?, ?, ?
-    )
-  `);
-
 function saveBase64Image(imageData, incidentId) {
   if (!imageData || typeof imageData !== 'string' || !imageData.trim()) {
     return 'https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?w=600&auto=format&fit=crop&q=80';
@@ -397,6 +355,63 @@ function saveBase64Image(imageData, incidentId) {
 
   return imageData;
 }
+
+function generateSectorCoordinates(sector) {
+  const ranges = {
+    norte:    { xMin: 20, xMax: 62, yMin: 12, yMax: 32 },
+    centro:   { xMin: 38, xMax: 62, yMin: 38, yMax: 62 },
+    sur:      { xMin: 25, xMax: 72, yMin: 68, yMax: 86 },
+    oriente:  { xMin: 66, xMax: 88, yMin: 20, yMax: 75 },
+    poniente: { xMin: 12, xMax: 34, yMin: 35, yMax: 75 }
+  };
+  const r = ranges[sector] || ranges.centro;
+  return {
+    x: Math.floor(Math.random() * (r.xMax - r.xMin + 1)) + r.xMin,
+    y: Math.floor(Math.random() * (r.yMax - r.yMin + 1)) + r.yMin
+  };
+}
+
+function createIncident(data, user = { role: 'invitado', name: 'Vecino Anónimo' }) {
+  // Cálculo de siguiente folio garantizando que no existan colisiones con registros existentes
+  const allIds = db.prepare("SELECT id FROM incidents WHERE id LIKE 'CIV-%'").all();
+  let maxNum = 8950;
+  allIds.forEach(row => {
+    const m = (row.id || '').match(/CIV-(\d+)/i);
+    if (m) {
+      const n = parseInt(m[1], 10);
+      if (n > maxNum) maxNum = n;
+    }
+  });
+  const nextNum = maxNum + 1;
+  const id = `CIV-${nextNum}`;
+  const folio = `#${id}`;
+
+  const cat = CATEGORY_MAP[data.category] || { label: 'General', icon: 'assignment' };
+  const sectorKey = data.sector || 'centro';
+  const sectorLabel = SECTOR_MAP[sectorKey] || 'Comuna Central';
+  const now = new Date().toISOString();
+
+  const coords = (data.coordinates && typeof data.coordinates.x === 'number' && typeof data.coordinates.y === 'number')
+    ? data.coordinates
+    : generateSectorCoordinates(sectorKey);
+
+  const role = user.role || 'invitado';
+  const priority = calculatePriority(role);
+  const isVerified = (role === 'vecino' || role === 'trabajador' || role === 'admin') ? 1 : 0;
+
+  const insertStmt = db.prepare(`
+    INSERT INTO incidents (
+      id, folio, title, description, category, category_label, category_icon,
+      status, status_label, urgency, urgency_label, channel, channel_label,
+      address, sector, sector_label, reported_by, reported_by_role, priority_level, priority_label,
+      is_verified, assigned_team, image_url, coord_x, coord_y, created_at, updated_at
+    ) VALUES (
+      ?, ?, ?, ?, ?, ?, ?,
+      ?, ?, ?, ?, ?, ?,
+      ?, ?, ?, ?, ?, ?, ?,
+      ?, ?, ?, ?, ?, ?, ?
+    )
+  `);
 
   const finalImageUrl = saveBase64Image(data.image, id);
 
@@ -455,17 +470,17 @@ function updateIncidentStatus(id, newStatus, user = { name: 'Operador', role: 't
   const updateStmt = db.prepare(`
     UPDATE incidents
     SET status = ?, status_label = ?, assigned_team = ?, updated_at = ?
-    WHERE id = ? OR folio = ?
+    WHERE id = ?
   `);
 
-  updateStmt.run(newStatus, STATUS_MAP[newStatus] || newStatus, assignedTeam, now, id, id);
+  updateStmt.run(newStatus, STATUS_MAP[newStatus] || newStatus, assignedTeam, now, current.id);
 
   db.prepare(`
     INSERT INTO incident_logs (incident_id, action, user_name, user_role, previous_status, new_status, details, created_at)
     VALUES (?, 'CAMBIO_ESTADO', ?, ?, ?, ?, 'Cambio de estado operativo', ?)
   `).run(current.id, user.name, user.role, current.status, newStatus, now);
 
-  return getIncidentById(id);
+  return getIncidentById(current.id);
 }
 
 /**
@@ -484,18 +499,35 @@ function moderateIncident(id, { priorityLevel, title, description, assignedTeam,
     4: 'Crítica (Super Admin)'
   };
 
+  const finalCategory = (category && CATEGORY_MAP[category]) ? category : current.category;
+  const finalCategoryLabel = CATEGORY_MAP[finalCategory]?.label || current.categoryLabel;
+  const finalCategoryIcon = CATEGORY_MAP[finalCategory]?.icon || current.categoryIcon;
+
   db.prepare(`
     UPDATE incidents
-    SET priority_level = ?, priority_label = ?, title = ?, description = ?, assigned_team = ?, moderated_by = ?, updated_at = ?
-    WHERE id = ? OR folio = ?
-  `).run(pLevel, pLabels[pLevel] || 'Ajustada', title || current.title, description || current.description, assignedTeam || current.assignedTeam, adminUser.name, now, id, id);
+    SET priority_level = ?, priority_label = ?, title = ?, description = ?, assigned_team = ?,
+        category = ?, category_label = ?, category_icon = ?, moderated_by = ?, updated_at = ?
+    WHERE id = ?
+  `).run(
+    pLevel,
+    pLabels[pLevel] || 'Ajustada',
+    title || current.title,
+    description !== undefined ? description : current.description,
+    assignedTeam || current.assignedTeam,
+    finalCategory,
+    finalCategoryLabel,
+    finalCategoryIcon,
+    adminUser.name,
+    now,
+    current.id
+  );
 
   db.prepare(`
     INSERT INTO incident_logs (incident_id, action, user_name, user_role, details, created_at)
     VALUES (?, 'MODERACION_ADMIN', ?, 'admin', ?, ?)
   `).run(current.id, adminUser.name, `Incidencia moderada por Super Admin. Nueva prioridad: ${pLabels[pLevel]}`, now);
 
-  return getIncidentById(id);
+  return getIncidentById(current.id);
 }
 
 // ==========================================
@@ -573,7 +605,7 @@ function toggleUserStatus(id, newStatus, adminActor) {
   return db.prepare('SELECT id, name, email, role, status FROM users WHERE id = ?').get(id);
 }
 
-function updateUserPassword(idOrEmail, newPassword, actor = { name: 'Super Admin Root', role: 'admin' }) {
+function updateUserPassword(idOrEmail, newPassword, actor = { name: 'Super Admin Root', role: 'admin' }, currentPassword = null) {
   if (!idOrEmail || !newPassword) {
     throw new Error('Identificador de usuario y nueva contraseña son obligatorios.');
   }
@@ -587,6 +619,12 @@ function updateUserPassword(idOrEmail, newPassword, actor = { name: 'Super Admin
 
   if (!user) {
     throw new Error('Usuario no encontrado.');
+  }
+
+  if (currentPassword !== null && currentPassword !== undefined) {
+    if (user.password !== currentPassword.toString().trim()) {
+      throw new Error('La contraseña actual ingresada es incorrecta.');
+    }
   }
 
   db.prepare('UPDATE users SET password = ? WHERE id = ?').run(newPassword.toString().trim(), user.id);
@@ -700,6 +738,9 @@ function authenticateGoogleUser({ email, name, avatar }) {
     if (user.status === 'suspended') {
       throw new Error('Tu cuenta se encuentra suspendida por la administración municipal.');
     }
+    if (user.role === 'admin') {
+      throw new Error('Las cuentas de Super Administrador requieren autenticación directa con contraseña.');
+    }
     addSystemAuditLog('LOGIN_GOOGLE', user.name, user.role, `Inicio de sesión con Google (${cleanEmail})`, '127.0.0.1');
     return {
       id: user.id,
@@ -791,6 +832,8 @@ function getDatabaseStats() {
   const funcionariosCount = db.prepare("SELECT COUNT(*) as total FROM users WHERE role = 'trabajador'").get().total;
   const criticalCount = db.prepare("SELECT COUNT(*) as total FROM incidents WHERE priority_level >= 3 AND status != 'resolved'").get().total;
 
+  const sysSettings = getSystemSettings();
+
   return {
     total,
     counts,
@@ -803,7 +846,13 @@ function getDatabaseStats() {
     databaseEngine: 'SQLite 3 (node:sqlite nativo)',
     databaseFile: 'src/data/civiccore.db',
     activeShift: 'Turno AM Activo (08:00 - 16:00)',
-    activeCrews: 8
+    activeCrews: 8,
+    settings: {
+      municipality_name: sysSettings.municipality_name || 'Municipalidad de Santiago Centro',
+      emergency_phone: sysSettings.emergency_phone || '1414',
+      sla_hours: sysSettings.sla_hours || '24',
+      system_status: sysSettings.system_status || 'Operativo Normal'
+    }
   };
 }
 
@@ -819,12 +868,12 @@ function deleteIncident(id, adminActor = { name: 'Panel de Control', role: 'admi
 
 function deleteUser(id, adminActor = { name: 'Panel de Control', role: 'admin' }) {
   const numId = Number(id);
-  if (numId === 1) {
-    throw new Error('No es posible eliminar al Administrador Principal del Sistema.');
-  }
-  const user = db.prepare('SELECT id, name, email FROM users WHERE id = ?').get(numId);
+  const user = db.prepare('SELECT id, name, email, role FROM users WHERE id = ?').get(numId);
   if (!user) {
     throw new Error('Usuario no encontrado.');
+  }
+  if (user.role === 'admin') {
+    throw new Error('No es posible eliminar al Administrador Principal del Sistema.');
   }
   db.prepare('DELETE FROM users WHERE id = ?').run(numId);
   addSystemAuditLog('ELIMINAR_USUARIO', adminActor.name || 'Control App', adminActor.role || 'admin', `Usuario ${user.name} (${user.email}) eliminado`, '127.0.0.1');

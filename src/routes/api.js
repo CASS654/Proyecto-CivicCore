@@ -7,14 +7,15 @@ const router = express.Router();
 
 // Helper para extraer usuario de la sesión simulada / headers
 function getUserFromRequest(req) {
-  const role = req.headers['x-user-role'] || req.body.userRole || 'invitado';
-  const email = req.headers['x-user-email'] || req.body.userEmail || '';
-  const name = req.headers['x-user-name'] || req.body.userName || (
+  const role = req.headers['x-user-role'] || req.body?.userRole || 'invitado';
+  const email = req.headers['x-user-email'] || req.body?.userEmail || '';
+  const id = req.headers['x-user-id'] || req.body?.userId || '';
+  const name = req.headers['x-user-name'] || req.body?.userName || (
     role === 'admin' ? 'Super Admin Root' :
     role === 'trabajador' ? 'Lic. Elena Morales' :
     role === 'vecino' ? 'Carmen Soto' : 'Vecino Anónimo'
   );
-  return { role, name, email };
+  return { id, role, name, email };
 }
 
 // ==========================================
@@ -118,10 +119,16 @@ router.post('/auth/register', (req, res) => {
 
 function decodeGoogleJwt(jwt) {
   try {
+    if (!jwt || typeof jwt !== 'string') return null;
     const parts = jwt.split('.');
-    if (parts.length < 2) return null;
+    if (parts.length !== 3 || !parts[2]) return null;
     const payloadStr = Buffer.from(parts[1], 'base64url').toString('utf8');
-    return JSON.parse(payloadStr);
+    const payload = JSON.parse(payloadStr);
+    const validIssuers = ['accounts.google.com', 'https://accounts.google.com'];
+    if (!payload || !validIssuers.includes(payload.iss)) return null;
+    if (payload.exp && (payload.exp * 1000) < Date.now()) return null;
+    if (payload.email_verified === false) return null;
+    return payload;
   } catch (err) {
     console.error('Error al decodificar JWT de Google:', err);
     return null;
@@ -144,9 +151,17 @@ router.get('/auth/google/config', (req, res) => {
 
 /**
  * POST /api/auth/google/config
- * Permite configurar o actualizar el Client ID de Google OAuth en caliente
+ * Permite configurar o actualizar el Client ID de Google OAuth en caliente (Solo Super Admin)
  */
 router.post('/auth/google/config', (req, res) => {
+  const actor = getUserFromRequest(req);
+  if (actor.role !== 'admin') {
+    return res.status(403).json({
+      status: 'error',
+      message: 'Acceso denegado: Se requiere rol de Super Administrador para configurar Google OAuth.'
+    });
+  }
+
   const { clientId } = req.body;
   if (!clientId || !clientId.trim()) {
     return res.status(400).json({
@@ -156,7 +171,7 @@ router.post('/auth/google/config', (req, res) => {
   }
 
   const cleanClientId = clientId.trim();
-  incidentService.updateSetting('google_client_id', cleanClientId, { role: 'admin', name: 'Administrador' });
+  incidentService.updateSetting('google_client_id', cleanClientId, actor);
 
   res.json({
     status: 'success',
@@ -168,26 +183,29 @@ router.post('/auth/google/config', (req, res) => {
 /**
  * POST /api/auth/google
  * Acceso o registro instantáneo con Google (Rol vecino por defecto)
- * Soporta credencial oficial JWT de Google Identity Services
+ * Exige credencial JWT válida de Google Identity Services
  */
 router.post('/auth/google', (req, res) => {
-  let { credential, email, name, avatar } = req.body;
+  const { credential } = req.body;
 
-  if (credential) {
-    const decoded = decodeGoogleJwt(credential);
-    if (decoded) {
-      email = decoded.email || email;
-      name = decoded.name || name;
-      avatar = decoded.picture || avatar;
-    }
-  }
-
-  if (!email) {
+  if (!credential) {
     return res.status(400).json({
       status: 'error',
-      message: 'No se pudo obtener el correo de la cuenta de Google.'
+      message: 'Se requiere una credencial firmada válida de Google Identity Services.'
     });
   }
+
+  const decoded = decodeGoogleJwt(credential);
+  if (!decoded || !decoded.email) {
+    return res.status(401).json({
+      status: 'error',
+      message: 'Token de Google inválido, expirado o sin verificación de correo.'
+    });
+  }
+
+  const email = decoded.email;
+  const name = decoded.name || '';
+  const avatar = decoded.picture || null;
 
   try {
     const user = incidentService.authenticateGoogle({ email, name, avatar });
@@ -223,9 +241,16 @@ router.post('/auth/logout', (req, res) => {
 
 /**
  * GET /api/auth/users
- * Lista de usuarios disponibles para testing/demostración
+ * Lista de usuarios disponibles (restringido a Super Administrador)
  */
 router.get('/auth/users', (req, res) => {
+  const actor = getUserFromRequest(req);
+  if (actor.role !== 'admin') {
+    return res.status(403).json({
+      status: 'error',
+      message: 'Acceso denegado: Se requiere rol de Super Administrador.'
+    });
+  }
   const users = incidentService.getAllUsers();
   res.json({
     status: 'success',
@@ -359,9 +384,16 @@ router.get('/stats', (req, res) => {
 
 /**
  * GET /api/admin/users
- * Lista completa de usuarios y credenciales
+ * Lista completa de usuarios y credenciales (restringido a Super Administrador)
  */
 router.get('/admin/users', (req, res) => {
+  const actor = getUserFromRequest(req);
+  if (actor.role !== 'admin') {
+    return res.status(403).json({
+      status: 'error',
+      message: 'Acceso denegado: Se requiere rol de Super Administrador.'
+    });
+  }
   const users = incidentService.getAllUsers();
   res.json({
     status: 'success',
@@ -506,20 +538,45 @@ router.patch('/admin/users/:id/password', (req, res) => {
 /**
  * PATCH /api/admin/users/:id
  * Modificar información general del usuario (correo, nombre, rol, departamento, rut)
+ * Soporta auto-edición segura de perfil sin escalación de privilegios
  */
 router.patch('/admin/users/:id', (req, res) => {
   const actor = getUserFromRequest(req);
   const targetId = req.params.id;
 
-  if (actor.role !== 'admin') {
+  if (actor.role === 'invitado') {
     return res.status(403).json({
       status: 'error',
-      message: 'Acceso denegado: Se requiere rol de Super Administrador para editar usuarios.'
+      message: 'Acceso denegado: Debes iniciar sesión para editar un perfil.'
     });
   }
 
+  let profilePayload = { ...req.body };
+
+  if (actor.role !== 'admin') {
+    const allUsers = incidentService.getAllUsers();
+    const targetUser = allUsers.find(u => String(u.id) === String(targetId));
+    if (!targetUser) {
+      return res.status(404).json({
+        status: 'error',
+        message: 'Usuario no encontrado.'
+      });
+    }
+    const isSelfById = actor.id && String(actor.id) === String(targetUser.id);
+    const isSelfByEmail = actor.email && actor.email.toLowerCase() === targetUser.email.toLowerCase();
+    const isSelfByRoleDemo = !actor.email && actor.role === targetUser.role;
+    if (!isSelfById && !isSelfByEmail && !isSelfByRoleDemo) {
+      return res.status(403).json({
+        status: 'error',
+        message: 'Acceso denegado: Solo puedes editar tus propios datos personales.'
+      });
+    }
+    // Bloquear cambio de rol en auto-edición
+    profilePayload.role = targetUser.role;
+  }
+
   try {
-    const updated = incidentService.updateUserProfile(targetId, req.body, actor);
+    const updated = incidentService.updateUserProfile(targetId, profilePayload, actor);
     res.json({
       status: 'success',
       message: `Datos de ${updated.name} actualizados con éxito`,
@@ -534,13 +591,77 @@ router.patch('/admin/users/:id', (req, res) => {
 });
 
 /**
+ * PATCH /api/auth/profile
+ * Actualizar perfil propio del usuario autenticado (sin cambio de rol)
+ */
+router.patch('/auth/profile', (req, res) => {
+  const actor = getUserFromRequest(req);
+  if (actor.role === 'invitado') {
+    return res.status(403).json({
+      status: 'error',
+      message: 'Debes iniciar sesión para actualizar tu perfil.'
+    });
+  }
+
+  const allUsers = incidentService.getAllUsers();
+  const targetId = req.body.id || actor.id;
+  let targetUser = targetId ? allUsers.find(u => String(u.id) === String(targetId)) : null;
+  if (!targetUser && actor.email) {
+    targetUser = allUsers.find(u => u.email.toLowerCase() === actor.email.toLowerCase());
+  }
+
+  if (!targetUser) {
+    return res.status(404).json({
+      status: 'error',
+      message: 'Cuenta de usuario no encontrada.'
+    });
+  }
+
+  try {
+    const updated = incidentService.updateUserProfile(targetUser.id, {
+      name: req.body.name,
+      email: req.body.email,
+      rutDni: req.body.rutDni,
+      department: req.body.department,
+      role: targetUser.role
+    }, actor);
+
+    res.json({
+      status: 'success',
+      message: 'Datos de perfil actualizados con éxito',
+      data: updated
+    });
+  } catch (err) {
+    return res.status(400).json({
+      status: 'error',
+      message: err.message || 'Error al actualizar perfil'
+    });
+  }
+});
+
+/**
  * POST /api/auth/change-password
- * Cambiar contraseña de la cuenta actualmente conectada
+ * Cambiar contraseña de la cuenta actualmente conectada (requiere contraseña actual)
  */
 router.post('/auth/change-password', (req, res) => {
-  const { email, newPassword } = req.body;
+  const { email, currentPassword, newPassword } = req.body;
   const actor = getUserFromRequest(req);
+
+  if (actor.role === 'invitado') {
+    return res.status(403).json({
+      status: 'error',
+      message: 'Debes iniciar sesión para cambiar tu contraseña.'
+    });
+  }
+
   const targetEmail = email || actor.email || (actor.role === 'admin' ? 'admin@civiccore.gov' : '');
+
+  if (!currentPassword || !currentPassword.toString().trim()) {
+    return res.status(400).json({
+      status: 'error',
+      message: 'Debes ingresar tu contraseña actual para confirmar el cambio.'
+    });
+  }
 
   if (!newPassword || newPassword.trim().length < 4) {
     return res.status(400).json({
@@ -556,8 +677,15 @@ router.post('/auth/change-password', (req, res) => {
     });
   }
 
+  if (actor.role !== 'admin' && actor.email && actor.email.toLowerCase() !== targetEmail.toLowerCase()) {
+    return res.status(403).json({
+      status: 'error',
+      message: 'Solo puedes modificar la contraseña de tu propia cuenta.'
+    });
+  }
+
   try {
-    const updated = incidentService.updatePassword(targetEmail, newPassword, actor);
+    const updated = incidentService.updatePassword(targetEmail, newPassword, actor, currentPassword);
     res.json({
       status: 'success',
       message: 'Contraseña actualizada con éxito',
@@ -613,6 +741,13 @@ router.patch('/admin/incidents/:id/moderate', (req, res) => {
  * Obtener los registros de auditoría y trazabilidad del sistema (Ley 19.628 / RFC 3161)
  */
 router.get('/admin/audit-logs', (req, res) => {
+  const actor = getUserFromRequest(req);
+  if (actor.role !== 'admin') {
+    return res.status(403).json({
+      status: 'error',
+      message: 'Acceso denegado: Se requiere rol de Super Administrador.'
+    });
+  }
   const logs = incidentService.getAuditLogs();
   res.json({
     status: 'success',
@@ -622,10 +757,189 @@ router.get('/admin/audit-logs', (req, res) => {
 });
 
 /**
+ * DELETE /api/admin/audit-logs
+ * Vaciar el historial de auditoría del sistema (Solo Super Admin)
+ */
+router.delete('/admin/audit-logs', (req, res) => {
+  const actor = getUserFromRequest(req);
+  if (actor.role !== 'admin') {
+    return res.status(403).json({
+      status: 'error',
+      message: 'Acceso denegado: Se requiere rol de Super Administrador.'
+    });
+  }
+  const result = incidentService.clearAuditLogs();
+  res.json({
+    status: 'success',
+    message: 'Bitácora de auditoría vaciada correctamente',
+    data: result
+  });
+});
+
+/**
+ * DELETE /api/admin/incidents/:id
+ * Eliminar una incidencia (Solo Super Admin)
+ */
+router.delete('/admin/incidents/:id', (req, res) => {
+  const actor = getUserFromRequest(req);
+  if (actor.role !== 'admin') {
+    return res.status(403).json({
+      status: 'error',
+      message: 'Acceso denegado: Se requiere rol de Super Administrador.'
+    });
+  }
+  const deleted = incidentService.deleteIncident(req.params.id, actor);
+  if (!deleted) {
+    return res.status(404).json({
+      status: 'error',
+      message: 'Incidencia no encontrada.'
+    });
+  }
+  res.json({
+    status: 'success',
+    message: 'Incidencia eliminada correctamente'
+  });
+});
+
+/**
+ * DELETE /api/admin/users/:id
+ * Eliminar una cuenta de usuario (Solo Super Admin)
+ */
+router.delete('/admin/users/:id', (req, res) => {
+  const actor = getUserFromRequest(req);
+  if (actor.role !== 'admin') {
+    return res.status(403).json({
+      status: 'error',
+      message: 'Acceso denegado: Se requiere rol de Super Administrador.'
+    });
+  }
+  try {
+    incidentService.deleteUser(req.params.id, actor);
+    res.json({
+      status: 'success',
+      message: 'Usuario eliminado correctamente'
+    });
+  } catch (err) {
+    return res.status(400).json({
+      status: 'error',
+      message: err.message || 'Error al eliminar usuario'
+    });
+  }
+});
+
+/**
+ * PATCH /api/admin/users/:id/role
+ * Cambiar rol de usuario (Solo Super Admin)
+ */
+router.patch('/admin/users/:id/role', (req, res) => {
+  const actor = getUserFromRequest(req);
+  if (actor.role !== 'admin') {
+    return res.status(403).json({
+      status: 'error',
+      message: 'Acceso denegado: Se requiere rol de Super Administrador.'
+    });
+  }
+  try {
+    const updated = incidentService.updateUserRole(req.params.id, req.body.role, actor);
+    res.json({
+      status: 'success',
+      message: 'Rol de usuario actualizado correctamente',
+      data: updated
+    });
+  } catch (err) {
+    return res.status(400).json({
+      status: 'error',
+      message: err.message || 'Error al cambiar rol'
+    });
+  }
+});
+
+/**
+ * GET /api/admin/backups
+ * Listar copias de seguridad de la base de datos SQLite
+ */
+router.get('/admin/backups', (req, res) => {
+  const actor = getUserFromRequest(req);
+  if (actor.role !== 'admin') {
+    return res.status(403).json({
+      status: 'error',
+      message: 'Acceso denegado: Se requiere rol de Super Administrador.'
+    });
+  }
+  const backups = incidentService.listBackups();
+  res.json({
+    status: 'success',
+    total: backups.length,
+    data: backups
+  });
+});
+
+/**
+ * POST /api/admin/backups
+ * Crear copia de seguridad de la base de datos SQLite
+ */
+router.post('/admin/backups', (req, res) => {
+  const actor = getUserFromRequest(req);
+  if (actor.role !== 'admin') {
+    return res.status(403).json({
+      status: 'error',
+      message: 'Acceso denegado: Se requiere rol de Super Administrador.'
+    });
+  }
+  try {
+    const backup = incidentService.createBackup();
+    res.status(201).json({
+      status: 'success',
+      message: `Copia de seguridad creada: ${backup.fileName}`,
+      data: backup
+    });
+  } catch (err) {
+    return res.status(500).json({
+      status: 'error',
+      message: err.message || 'Error al crear copia de seguridad'
+    });
+  }
+});
+
+/**
+ * POST /api/admin/backups/restore
+ * Restaurar copia de seguridad de la base de datos SQLite
+ */
+router.post('/admin/backups/restore', (req, res) => {
+  const actor = getUserFromRequest(req);
+  if (actor.role !== 'admin') {
+    return res.status(403).json({
+      status: 'error',
+      message: 'Acceso denegado: Se requiere rol de Super Administrador.'
+    });
+  }
+  try {
+    const result = incidentService.restoreBackup(req.body.fileName);
+    res.json({
+      status: 'success',
+      message: `Base de datos restaurada desde ${result.restoredFrom}`,
+      data: result
+    });
+  } catch (err) {
+    return res.status(400).json({
+      status: 'error',
+      message: err.message || 'Error al restaurar copia de seguridad'
+    });
+  }
+});
+
+/**
  * GET /api/admin/settings
- * Parámetros de gobernanza municipal
+ * Parámetros de gobernanza municipal (restringido a Super Administrador)
  */
 router.get('/admin/settings', (req, res) => {
+  const actor = getUserFromRequest(req);
+  if (actor.role !== 'admin') {
+    return res.status(403).json({
+      status: 'error',
+      message: 'Acceso denegado: Se requiere rol de Super Administrador.'
+    });
+  }
   const settings = incidentService.getSettings();
   res.json({
     status: 'success',

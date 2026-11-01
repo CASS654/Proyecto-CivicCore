@@ -94,9 +94,9 @@
   <div class="flex-1 flex flex-col lg:flex-row h-full overflow-hidden">
     
     <!-- ============================================================== -->
-    <!-- SIDEBAR DE ESCRITORIO (Visible para usuarios autenticados) -->
+    <!-- SIDEBAR DE ESCRITORIO (Deshabilitada permanentemente) -->
     <!-- ============================================================== -->
-    <aside id="sidebar-desktop" class="hidden lg:flex flex-col w-72 bg-surface-container-low border-r border-outline-variant/30 shrink-0 h-full z-40">
+    <aside id="sidebar-desktop" class="hidden">
       <!-- Marca Municipal y Logo -->
       <div class="h-16 px-6 flex items-center justify-between border-b border-outline-variant/20 shrink-0">
         <div class="flex items-center gap-3 cursor-pointer group hover:opacity-90 transition-opacity" onclick="window.civicApp.switchView('view-inicio')" title="Ir a la página de inicio">
@@ -414,7 +414,7 @@
                 <span>Hacer un reporte</span>
               </button>
 
-              <button onclick="document.getElementById('sobre-nosotros').scrollIntoView({ behavior: 'smooth' })" class="group px-6 py-3.5 rounded-2xl bg-surface-container-lowest hover:bg-surface-container-low text-on-surface font-semibold text-sm sm:text-base flex items-center justify-center gap-2 transition-all border border-outline-variant/40 hover:border-primary/50 shadow-sm hover:scale-105">
+              <button onclick="const el = document.getElementById('sobre-nosotros'); if(el){ el.dataset.forceVisible='true'; el.classList.remove('cc-scroll-hidden'); el.classList.add('cc-scroll-visible'); el.scrollIntoView({ behavior: 'smooth' }); }" class="group px-6 py-3.5 rounded-2xl bg-surface-container-lowest hover:bg-surface-container-low text-on-surface font-semibold text-sm sm:text-base flex items-center justify-center gap-2 transition-all border border-outline-variant/40 hover:border-primary/50 shadow-sm hover:scale-105">
                 <span>Conócenos un poco más</span>
                 <span class="material-symbols-outlined text-[18px] sm:text-[20px] text-primary animate-bounce">arrow_downward</span>
               </button>
@@ -471,6 +471,26 @@
                 </p>
               </div>
             </div>
+
+            <!-- Indicadores Comunitarios en Tiempo Real (KPIs de Portada) -->
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2 border-t border-outline-variant/20">
+              <div class="p-3.5 rounded-2xl bg-surface-container-low/80 border border-outline-variant/20 text-center">
+                <span id="home-kpi-total" class="text-xl sm:text-2xl font-black text-primary block">48+</span>
+                <span class="text-[11px] font-semibold text-on-surface-variant">Reportes Vecinales</span>
+              </div>
+              <div class="p-3.5 rounded-2xl bg-surface-container-low/80 border border-outline-variant/20 text-center">
+                <span id="home-kpi-progreso" class="text-xl sm:text-2xl font-black text-secondary block">12</span>
+                <span class="text-[11px] font-semibold text-on-surface-variant">Cuadrillas en Terreno</span>
+              </div>
+              <div class="p-3.5 rounded-2xl bg-surface-container-low/80 border border-outline-variant/20 text-center">
+                <span id="home-kpi-resueltas" class="text-xl sm:text-2xl font-black text-emerald-600 block">36</span>
+                <span class="text-[11px] font-semibold text-on-surface-variant">Casos Resueltos</span>
+              </div>
+              <div class="p-3.5 rounded-2xl bg-surface-container-low/80 border border-outline-variant/20 text-center">
+                <span id="home-kpi-eficiencia" class="text-xl sm:text-2xl font-black text-amber-600 block">94%</span>
+                <span class="text-[11px] font-semibold text-on-surface-variant">Efectividad Comunal</span>
+              </div>
+            </div>
           </div>
 
           <!-- 3. CONSULTA SIMPLE DE FOLIO (MINIMALISTA Y CON VIDA) -->
@@ -484,7 +504,7 @@
             </p>
 
             <div class="flex flex-col sm:flex-row gap-2.5 max-w-md mx-auto pt-1">
-              <input id="home-folio-input" type="text" placeholder="Ej: CIV-8951" class="flex-1 px-4 py-3 rounded-xl bg-surface-container-lowest border border-outline-variant/40 focus:border-primary focus:outline-none text-on-surface text-sm text-center sm:text-left transition-all" onkeydown="if(event.key === 'Enter') { event.preventDefault(); window.civicApp.handleHomeFolioSearch(); }"/>
+              <input id="home-folio-input" type="text" placeholder="Ej: CIV-8951" aria-label="Código de seguimiento de folio" class="flex-1 px-4 py-3 rounded-xl bg-surface-container-lowest border border-outline-variant/40 focus:border-primary focus:outline-none text-on-surface text-sm text-center sm:text-left transition-all" onkeydown="if(event.key === 'Enter') { event.preventDefault(); window.civicApp.handleHomeFolioSearch(); }"/>
               <button onclick="window.civicApp.handleHomeFolioSearch()" class="px-6 py-3 rounded-xl bg-primary text-on-primary hover:bg-primary-container font-bold text-sm shadow-md hover:scale-105 active:scale-95 transition-all">
                 Consultar
               </button>
@@ -530,7 +550,7 @@
             </div>
           </footer>
 
-          <!-- Script de Animación al Bajar la Página (Encogimiento de Título + Aparición solo después de bajar) -->
+          <!-- Script de Animación al Bajar la Página (Encogimiento de Título + Aparición inteligente en Viewport) -->
           <script>
             (function() {
               const scrollContainer = document.getElementById('main-scroll-container');
@@ -538,16 +558,9 @@
               const heroSubtitle = document.getElementById('hero-subtitle-text');
               const scrollItems = document.querySelectorAll('#view-inicio .cc-scroll-item');
 
-              // Al cargar, ocultar todo lo que está debajo del Hero para que solo se vea lo primero
-              scrollItems.forEach((el) => {
-                el.classList.add('cc-scroll-hidden');
-                el.classList.remove('cc-scroll-visible');
-              });
-
               function onScrollUpdate() {
                 if (!scrollContainer || !heroTitle) return;
                 const scrollTop = scrollContainer.scrollTop || window.scrollY || 0;
-                // Encoger el título progresivamente desde escala 1 hasta 0.56 al bajar 280px y compactar su espacio inferior
                 const maxScroll = 280;
                 const progress = Math.min(Math.max(scrollTop / maxScroll, 0), 1);
                 const scale = 1 - (progress * 0.44);
@@ -562,21 +575,24 @@
                   heroSubtitle.style.opacity = String(1 - (progress * 0.25));
                 }
 
-                // Mostrar las secciones inferiores únicamente después de empezar a bajar (scrollTop > 30)
                 const viewportH = scrollContainer.clientHeight || window.innerHeight;
+                const canScrollEnough = (scrollContainer.scrollHeight - viewportH) > 60;
+
                 scrollItems.forEach((el) => {
-                  if (scrollTop < 25) {
-                    el.classList.add('cc-scroll-hidden');
-                    el.classList.remove('cc-scroll-visible');
-                  } else {
-                    const rect = el.getBoundingClientRect();
-                    if (rect.top < viewportH * 0.9) {
+                  if (el.dataset.forceVisible === 'true' || !canScrollEnough) {
+                    el.classList.add('cc-scroll-visible');
+                    el.classList.remove('cc-scroll-hidden');
+                    return;
+                  }
+                  const rect = el.getBoundingClientRect();
+                  if (scrollTop >= 20 || rect.top < viewportH * 0.88) {
+                    if (rect.top < viewportH * 0.94) {
                       el.classList.add('cc-scroll-visible');
                       el.classList.remove('cc-scroll-hidden');
-                    } else {
-                      el.classList.remove('cc-scroll-visible');
-                      el.classList.add('cc-scroll-hidden');
                     }
+                  } else {
+                    el.classList.add('cc-scroll-hidden');
+                    el.classList.remove('cc-scroll-visible');
                   }
                 });
               }
@@ -585,6 +601,8 @@
                 scrollContainer.addEventListener('scroll', onScrollUpdate, { passive: true });
               }
               window.addEventListener('scroll', onScrollUpdate, { passive: true });
+              window.addEventListener('resize', onScrollUpdate, { passive: true });
+              requestAnimationFrame(onScrollUpdate);
             })();
           </script>
 
@@ -1178,6 +1196,8 @@
               <div class="flex items-center gap-1"><span class="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-emerald-500"></span><span>Aseo</span></div>
               <div class="flex items-center gap-1"><span class="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-yellow-400"></span><span>Alumbrado</span></div>
               <div class="flex items-center gap-1"><span class="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-blue-500"></span><span>Aguas</span></div>
+              <div class="flex items-center gap-1"><span class="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-green-600"></span><span>Parques y Jardines</span></div>
+              <div class="flex items-center gap-1"><span class="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-indigo-600"></span><span>Seguridad</span></div>
             </div>
 
             <!-- Previsualización de Incidencia Seleccionada -->
@@ -1470,22 +1490,22 @@
             <form id="form-create-user" class="space-y-4">
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label class="block text-xs font-bold text-on-surface mb-1">Nombre Completo *</label>
+                  <label for="admin-user-name" class="block text-xs font-bold text-on-surface mb-1">Nombre Completo *</label>
                   <input type="text" id="admin-user-name" required placeholder="Ej: Marcos Alarcón" class="w-full h-11 px-4 rounded-xl bg-surface-container-low text-on-surface text-sm border border-outline-variant/30 focus:border-primary">
                 </div>
                 <div>
-                  <label class="block text-xs font-bold text-on-surface mb-1">Correo Electrónico *</label>
+                  <label for="admin-user-email" class="block text-xs font-bold text-on-surface mb-1">Correo Electrónico *</label>
                   <input type="email" id="admin-user-email" required placeholder="Ej: marcos.alarcon@municipio.gov" class="w-full h-11 px-4 rounded-xl bg-surface-container-low text-on-surface text-sm border border-outline-variant/30 focus:border-primary">
                 </div>
               </div>
 
               <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
-                  <label class="block text-xs font-bold text-on-surface mb-1">RUT / DNI *</label>
+                  <label for="admin-user-rut" class="block text-xs font-bold text-on-surface mb-1">RUT / DNI *</label>
                   <input type="text" id="admin-user-rut" placeholder="Ej: 16.421.905-3" class="w-full h-11 px-4 rounded-xl bg-surface-container-low text-on-surface text-sm border border-outline-variant/30 focus:border-primary">
                 </div>
                 <div>
-                  <label class="block text-xs font-bold text-on-surface mb-1">Rol / Atribución *</label>
+                  <label for="admin-user-role" class="block text-xs font-bold text-on-surface mb-1">Rol / Atribución *</label>
                   <select id="admin-user-role" class="w-full h-11 px-4 rounded-xl bg-surface-container-low text-on-surface text-sm border border-outline-variant/30 focus:border-primary">
                     <option value="trabajador">Funcionario / Trabajador del Estado</option>
                     <option value="vecino">Vecino Verificado</option>
@@ -1493,7 +1513,7 @@
                   </select>
                 </div>
                 <div>
-                  <label class="block text-xs font-bold text-on-surface mb-1">Dirección / Departamento *</label>
+                  <label for="admin-user-dept" class="block text-xs font-bold text-on-surface mb-1">Dirección / Departamento *</label>
                   <input type="text" id="admin-user-dept" placeholder="Ej: DOM Obras, Seguridad 1414, DIMAO" value="Seguridad Ciudadana & 1414" class="w-full h-11 px-4 rounded-xl bg-surface-container-low text-on-surface text-sm border border-outline-variant/30 focus:border-primary">
                 </div>
               </div>
@@ -1601,9 +1621,9 @@
             <form id="form-moderate-incident" class="space-y-4">
               <input type="hidden" id="mod-incident-id" value="">
 
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
-                  <label class="block text-xs font-bold text-on-surface mb-1">Ajustar Nivel de Prioridad *</label>
+                  <label for="mod-priority-level" class="block text-xs font-bold text-on-surface mb-1">Ajustar Nivel de Prioridad *</label>
                   <select id="mod-priority-level" class="w-full h-11 px-4 rounded-xl bg-surface-container-low text-on-surface text-sm border border-outline-variant/30 focus:border-primary font-bold">
                     <option value="1">Prioridad 1: Normal (Invitado / Rutinario)</option>
                     <option value="2">Prioridad 2: Alta (Vecino Verificado)</option>
@@ -1613,18 +1633,30 @@
                 </div>
 
                 <div>
-                  <label class="block text-xs font-bold text-on-surface mb-1">Reasignar Cuadrilla Municipal *</label>
+                  <label for="mod-category" class="block text-xs font-bold text-on-surface mb-1">Categoría de Servicio *</label>
+                  <select id="mod-category" class="w-full h-11 px-4 rounded-xl bg-surface-container-low text-on-surface text-sm border border-outline-variant/30 focus:border-primary font-semibold">
+                    <option value="vialidad">Baches y Calzadas</option>
+                    <option value="aseo">Aseo Urbano</option>
+                    <option value="alumbrado">Alumbrado Público</option>
+                    <option value="aguas">Agua y Alcantarillado</option>
+                    <option value="areas_verdes">Parques y Jardines</option>
+                    <option value="seguridad">Seguridad Ciudadana</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label for="mod-assigned-team" class="block text-xs font-bold text-on-surface mb-1">Reasignar Cuadrilla Municipal *</label>
                   <input type="text" id="mod-assigned-team" placeholder="Ej: Cuadrilla Especial de Obras #01" class="w-full h-11 px-4 rounded-xl bg-surface-container-low text-on-surface text-sm border border-outline-variant/30 focus:border-primary">
                 </div>
               </div>
 
               <div>
-                <label class="block text-xs font-bold text-on-surface mb-1">Título Oficial del Reporte *</label>
+                <label for="mod-title" class="block text-xs font-bold text-on-surface mb-1">Título Oficial del Reporte *</label>
                 <input type="text" id="mod-title" required class="w-full h-11 px-4 rounded-xl bg-surface-container-low text-on-surface text-sm border border-outline-variant/30 focus:border-primary">
               </div>
 
               <div>
-                <label class="block text-xs font-bold text-on-surface mb-1">Descripción Editada / Dictamen de Moderación</label>
+                <label for="mod-desc" class="block text-xs font-bold text-on-surface mb-1">Descripción Editada / Dictamen de Moderación</label>
                 <textarea id="mod-desc" rows="3" class="w-full p-4 rounded-xl bg-surface-container-low text-on-surface text-sm border border-outline-variant/30 focus:border-primary"></textarea>
               </div>
 
@@ -1669,13 +1701,13 @@
 
             <div class="p-3.5 sm:p-4 rounded-2xl bg-surface-container-low shadow-sm border border-outline-variant/20">
               <span class="text-[11px] sm:text-xs font-bold text-outline uppercase tracking-wider">Acciones Super Admin</span>
-              <div class="mt-1.5 sm:mt-2 text-xl sm:text-2xl font-bold text-primary">18</div>
+              <div class="mt-1.5 sm:mt-2 text-xl sm:text-2xl font-bold text-primary" id="audit-stat-admin-actions">18</div>
               <span class="text-[11px] text-outline">Super Admin</span>
             </div>
 
             <div class="p-3.5 sm:p-4 rounded-2xl bg-surface-container-low shadow-sm border border-outline-variant/20">
               <span class="text-[11px] sm:text-xs font-bold text-outline uppercase tracking-wider">ClaveÚnica & Auth</span>
-              <div class="mt-1.5 sm:mt-2 text-xl sm:text-2xl font-bold text-secondary">86</div>
+              <div class="mt-1.5 sm:mt-2 text-xl sm:text-2xl font-bold text-secondary" id="audit-stat-auth-events">86</div>
               <span class="text-[11px] text-outline">Validaciones Segpres</span>
             </div>
 
@@ -1695,15 +1727,15 @@
 
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-4" id="system-settings-grid">
               <div>
-                <label class="block text-xs font-bold text-on-surface mb-1">Nombre Oficial Comuna</label>
+                <label for="setting-municipality" class="block text-xs font-bold text-on-surface mb-1">Nombre Oficial Comuna</label>
                 <input type="text" id="setting-municipality" value="Municipalidad de Santiago Centro" class="w-full h-11 px-3 rounded-xl bg-surface-container-low text-on-surface text-xs border border-outline-variant/30">
               </div>
               <div>
-                <label class="block text-xs font-bold text-on-surface mb-1">Central de Emergencias</label>
+                <label for="setting-phone" class="block text-xs font-bold text-on-surface mb-1">Central de Emergencias</label>
                 <input type="text" id="setting-phone" value="1414" class="w-full h-11 px-3 rounded-xl bg-surface-container-low text-on-surface text-xs border border-outline-variant/30">
               </div>
               <div>
-                <label class="block text-xs font-bold text-on-surface mb-1">SLA Comprometido (Horas)</label>
+                <label for="setting-sla" class="block text-xs font-bold text-on-surface mb-1">SLA Comprometido (Horas)</label>
                 <input type="number" id="setting-sla" value="24" class="w-full h-11 px-3 rounded-xl bg-surface-container-low text-on-surface text-xs border border-outline-variant/30">
               </div>
             </div>
@@ -1768,7 +1800,7 @@
   <!-- ============================================================== -->
   <!-- MODAL DE ACCESO Y REGISTRO (CON CAMBIO DE INTERFAZ) -->
   <!-- ============================================================== -->
-  <div id="modal-auth" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-3 sm:p-4">
+  <div id="modal-auth" role="dialog" aria-modal="true" aria-labelledby="auth-modal-title" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-3 sm:p-4">
     <div class="bg-surface-container-lowest rounded-3xl max-w-md w-full max-h-[92dvh] flex flex-col overflow-hidden shadow-2xl border border-outline-variant/30 animate-scale-up">
       
       <!-- Cabecera Modal Dinámica -->
@@ -1791,7 +1823,7 @@
       <div id="auth-view-login" class="p-5 sm:p-6 pt-4 space-y-4 overflow-y-auto overscroll-contain">
         <form id="form-auth-login" class="space-y-4">
           <div>
-            <label class="block text-xs font-bold text-on-surface mb-1.5">Correo Electrónico o RUT</label>
+            <label for="auth-input-email" class="block text-xs font-bold text-on-surface mb-1.5">Correo Electrónico o RUT</label>
             <div class="relative flex items-center">
               <span class="material-symbols-outlined text-[18px] text-outline absolute left-3">person</span>
               <input type="text" id="auth-input-email" required placeholder="correo@ejemplo.cl o RUT" autocomplete="username" class="w-full h-11 pl-10 pr-3 rounded-xl bg-surface-container-low text-on-surface text-sm border border-outline-variant/30 focus:border-primary">
@@ -1799,7 +1831,7 @@
           </div>
 
           <div>
-            <label class="block text-xs font-bold text-on-surface mb-1.5">Contraseña</label>
+            <label for="auth-input-password" class="block text-xs font-bold text-on-surface mb-1.5">Contraseña</label>
             <div class="relative flex items-center">
               <span class="material-symbols-outlined text-[18px] text-outline absolute left-3">lock</span>
               <input type="password" id="auth-input-password" required placeholder="••••••••" autocomplete="current-password" class="w-full h-11 pl-10 pr-10 rounded-xl bg-surface-container-low text-on-surface text-sm border border-outline-variant/30 focus:border-primary">
@@ -1815,6 +1847,8 @@
             <span class="material-symbols-outlined text-[18px]">login</span>
           </button>
         </form>
+
+        <div id="google-login-btn-container" class="flex justify-center"></div>
 
         <!-- Botón encubierto que cambia a la interfaz de Registro -->
         <div class="text-center pt-0.5">
@@ -1838,7 +1872,7 @@
 
         <form id="form-auth-register" class="space-y-3">
           <div>
-            <label class="block text-xs font-bold text-on-surface mb-1">Nombre Completo *</label>
+            <label for="register-input-name" class="block text-xs font-bold text-on-surface mb-1">Nombre Completo *</label>
             <div class="relative flex items-center">
               <span class="material-symbols-outlined text-[18px] text-outline absolute left-3">badge</span>
               <input type="text" id="register-input-name" required placeholder="Ej: Marcela Contreras" class="w-full h-10 pl-10 pr-3 rounded-xl bg-surface-container-low text-on-surface text-sm border border-outline-variant/30 focus:border-primary">
@@ -1846,7 +1880,7 @@
           </div>
 
           <div>
-            <label class="block text-xs font-bold text-on-surface mb-1">Correo Electrónico *</label>
+            <label for="register-input-email" class="block text-xs font-bold text-on-surface mb-1">Correo Electrónico *</label>
             <div class="relative flex items-center">
               <span class="material-symbols-outlined text-[18px] text-outline absolute left-3">mail</span>
               <input type="email" id="register-input-email" required placeholder="tu.correo@ejemplo.cl" class="w-full h-10 pl-10 pr-3 rounded-xl bg-surface-container-low text-on-surface text-sm border border-outline-variant/30 focus:border-primary">
@@ -1854,7 +1888,7 @@
           </div>
 
           <div>
-            <label class="block text-xs font-bold text-on-surface mb-1">RUT / Identificación (Opcional)</label>
+            <label for="register-input-rut" class="block text-xs font-bold text-on-surface mb-1">RUT / Identificación (Opcional)</label>
             <div class="relative flex items-center">
               <span class="material-symbols-outlined text-[18px] text-outline absolute left-3">fingerprint</span>
               <input type="text" id="register-input-rut" placeholder="Ej: 16.482.910-3" class="w-full h-10 pl-10 pr-3 rounded-xl bg-surface-container-low text-on-surface text-sm border border-outline-variant/30 focus:border-primary font-mono text-xs">
@@ -1863,11 +1897,11 @@
 
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
             <div>
-              <label class="block text-xs font-bold text-on-surface mb-1">Contraseña *</label>
+              <label for="register-input-password" class="block text-xs font-bold text-on-surface mb-1">Contraseña *</label>
               <input type="password" id="register-input-password" required minlength="4" placeholder="Mínimo 4 caracteres" class="w-full h-10 px-3 rounded-xl bg-surface-container-low text-on-surface text-sm border border-outline-variant/30 focus:border-primary">
             </div>
             <div>
-              <label class="block text-xs font-bold text-on-surface mb-1">Repetir Clave *</label>
+              <label for="register-input-confirm" class="block text-xs font-bold text-on-surface mb-1">Repetir Clave *</label>
               <input type="password" id="register-input-confirm" required minlength="4" placeholder="Repite la clave" class="w-full h-10 px-3 rounded-xl bg-surface-container-low text-on-surface text-sm border border-outline-variant/30 focus:border-primary">
             </div>
           </div>
@@ -1877,6 +1911,8 @@
             <span>Crear Mi Cuenta de Vecino</span>
           </button>
         </form>
+
+        <div id="google-reg-btn-container" class="flex justify-center"></div>
 
         <!-- Volver a Iniciar Sesión -->
         <div class="text-center pt-0.5">
@@ -1897,7 +1933,7 @@
   <!-- ============================================================== -->
   <!-- MODAL DE DETALLE Y CAMBIO DE ESTADO DE INCIDENCIA (Trabajador) -->
   <!-- ============================================================== -->
-  <div id="modal-incident-detail" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-3 sm:p-4">
+  <div id="modal-incident-detail" role="dialog" aria-modal="true" aria-labelledby="modal-title" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-3 sm:p-4">
     <div class="bg-surface-container-lowest rounded-3xl max-w-xl w-full max-h-[92dvh] flex flex-col overflow-hidden shadow-2xl border border-outline-variant/30 animate-scale-up">
       
       <!-- Cabecera Modal con Imagen -->
@@ -1916,8 +1952,10 @@
       <!-- Contenido Scrollable -->
       <div class="p-4 sm:p-6 overflow-y-auto overscroll-contain space-y-4">
         <div>
-          <div class="flex items-center gap-2 mb-1">
+          <div class="flex flex-wrap items-center gap-2 mb-1">
             <span id="modal-priority-badge" class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-primary-fixed text-primary">Prioridad</span>
+            <span id="modal-category" class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-surface-container text-on-surface-variant">Categoría</span>
+            <span id="modal-urgency" class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-surface-container text-on-surface-variant">Urgencia</span>
           </div>
           <h3 id="modal-title" class="text-lg sm:text-xl font-bold text-on-surface leading-snug">Título de la incidencia</h3>
           <p id="modal-address" class="text-xs sm:text-sm text-outline flex items-center gap-1.5 mt-1">
@@ -1930,10 +1968,14 @@
           Descripción completa del reporte vecinal...
         </p>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3 text-xs">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3 text-xs">
           <div class="p-3 rounded-xl bg-surface-container">
             <span class="text-outline block mb-0.5">Denunciante / Actor:</span>
             <span id="modal-reportedBy" class="font-bold text-on-surface">Nombre</span>
+          </div>
+          <div class="p-3 rounded-xl bg-surface-container">
+            <span class="text-outline block mb-0.5">Cuadrilla Asignada:</span>
+            <span id="modal-assignedTeam" class="font-bold text-primary">Por asignar</span>
           </div>
           <div class="p-3 rounded-xl bg-surface-container">
             <span class="text-outline block mb-0.5">Canal de Entrada:</span>
@@ -1964,7 +2006,7 @@
   <!-- ============================================================== -->
   <!-- MODAL DE ÉXITO Y COMPROBANTE OFICIAL DE REPORTE CIUDADANO -->
   <!-- ============================================================== -->
-  <div id="modal-report-success" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-3 sm:p-4">
+  <div id="modal-report-success" role="dialog" aria-modal="true" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-3 sm:p-4">
     <div class="bg-surface-container-lowest rounded-3xl max-w-md w-full max-h-[92dvh] flex flex-col overflow-hidden shadow-2xl border border-outline-variant/30 animate-scale-up">
       <div class="p-5 sm:p-6 text-center space-y-4 overflow-y-auto overscroll-contain">
         <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto shadow-md">
@@ -2021,7 +2063,7 @@
   <!-- ============================================================== -->
   <!-- MODAL DE CAMBIO DE CONTRASEÑA (Para Propia Cuenta y Admin) -->
   <!-- ============================================================== -->
-  <div id="modal-change-password" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-3 sm:p-4">
+  <div id="modal-change-password" role="dialog" aria-modal="true" aria-labelledby="change-pwd-modal-title" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-3 sm:p-4">
     <div class="bg-surface-container-lowest rounded-3xl max-w-md w-full max-h-[92dvh] flex flex-col overflow-hidden shadow-2xl border border-outline-variant/30 animate-scale-up">
       <div class="p-5 sm:p-6 pb-3.5 sm:pb-4 border-b border-outline-variant/20 relative shrink-0">
         <button id="btn-close-password-modal" class="absolute top-4 sm:top-5 right-4 sm:right-5 w-8 h-8 rounded-full bg-surface-container text-on-surface-variant flex items-center justify-center hover:bg-surface-container-high transition-all">
@@ -2054,8 +2096,16 @@
           <input type="hidden" id="change-pwd-target-id" value="">
           <input type="hidden" id="change-pwd-target-email" value="">
 
+          <div id="current-password-group">
+            <label for="input-current-password" class="block text-xs font-bold text-on-surface mb-1.5">Contraseña Actual *</label>
+            <div class="relative flex items-center">
+              <span class="material-symbols-outlined text-[18px] text-outline absolute left-3">key</span>
+              <input type="password" id="input-current-password" placeholder="Ingresa tu clave actual" class="w-full h-11 pl-10 pr-4 rounded-xl bg-surface-container-low text-on-surface text-sm border border-outline-variant/30 focus:border-primary">
+            </div>
+          </div>
+
           <div>
-            <label class="block text-xs font-bold text-on-surface mb-1.5">Nueva Contraseña *</label>
+            <label for="input-new-password" class="block text-xs font-bold text-on-surface mb-1.5">Nueva Contraseña *</label>
             <div class="relative flex items-center">
               <span class="material-symbols-outlined text-[18px] text-outline absolute left-3">lock</span>
               <input type="password" id="input-new-password" required minlength="4" placeholder="Mínimo 4 caracteres" class="w-full h-11 pl-10 pr-10 rounded-xl bg-surface-container-low text-on-surface text-sm border border-outline-variant/30 focus:border-primary">
@@ -2066,7 +2116,7 @@
           </div>
 
           <div>
-            <label class="block text-xs font-bold text-on-surface mb-1.5">Confirmar Nueva Contraseña *</label>
+            <label for="input-confirm-password" class="block text-xs font-bold text-on-surface mb-1.5">Confirmar Nueva Contraseña *</label>
             <div class="relative flex items-center">
               <span class="material-symbols-outlined text-[18px] text-outline absolute left-3">lock_reset</span>
               <input type="password" id="input-confirm-password" required minlength="4" placeholder="Repite la contraseña" class="w-full h-11 pl-10 pr-10 rounded-xl bg-surface-container-low text-on-surface text-sm border border-outline-variant/30 focus:border-primary">
@@ -2093,7 +2143,7 @@
   <!-- ============================================================== -->
   <!-- MODAL DE EDICIÓN DE USUARIO (Cambio de Correo y Datos) -->
   <!-- ============================================================== -->
-  <div id="modal-edit-user" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-3 sm:p-4">
+  <div id="modal-edit-user" role="dialog" aria-modal="true" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-3 sm:p-4">
     <div class="bg-surface-container-lowest rounded-3xl max-w-md w-full max-h-[92dvh] flex flex-col overflow-hidden shadow-2xl border border-outline-variant/30 animate-scale-up">
       <div class="p-5 sm:p-6 pb-3.5 sm:pb-4 border-b border-outline-variant/20 relative shrink-0">
         <button id="btn-close-edit-user-modal" type="button" onclick="window.civicApp.closeEditUserModal()" class="absolute top-4 sm:top-5 right-4 sm:right-5 w-8 h-8 rounded-full bg-surface-container text-on-surface-variant flex items-center justify-center hover:bg-surface-container-high transition-all">
@@ -2114,7 +2164,7 @@
         <input type="hidden" id="edit-user-id" value="">
 
         <div>
-          <label class="block text-xs font-bold text-on-surface mb-1.5">Nombre Completo *</label>
+          <label for="edit-user-name" class="block text-xs font-bold text-on-surface mb-1.5">Nombre Completo *</label>
           <div class="relative flex items-center">
             <span class="material-symbols-outlined text-[18px] text-outline absolute left-3">person</span>
             <input type="text" id="edit-user-name" required placeholder="Ej: Carmen Soto" class="w-full h-11 pl-10 pr-4 rounded-xl bg-surface-container-low text-on-surface text-sm border border-outline-variant/30 focus:border-primary">
@@ -2122,7 +2172,7 @@
         </div>
 
         <div>
-          <label class="block text-xs font-bold text-on-surface mb-1.5">Correo Electrónico *</label>
+          <label for="edit-user-email" class="block text-xs font-bold text-on-surface mb-1.5">Correo Electrónico *</label>
           <div class="relative flex items-center">
             <span class="material-symbols-outlined text-[18px] text-outline absolute left-3">mail</span>
             <input type="email" id="edit-user-email" required placeholder="usuario@comuna.cl" class="w-full h-11 pl-10 pr-4 rounded-xl bg-surface-container-low text-on-surface text-sm border border-outline-variant/30 focus:border-primary">
@@ -2131,11 +2181,11 @@
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <label class="block text-xs font-bold text-on-surface mb-1.5">RUT / Identificación</label>
+            <label for="edit-user-rut" class="block text-xs font-bold text-on-surface mb-1.5">RUT / Identificación</label>
             <input type="text" id="edit-user-rut" placeholder="14.283.910-4" class="w-full h-11 px-3 rounded-xl bg-surface-container-low text-on-surface text-sm border border-outline-variant/30 focus:border-primary font-mono text-xs">
           </div>
           <div>
-            <label class="block text-xs font-bold text-on-surface mb-1.5">Rol de Acceso *</label>
+            <label for="edit-user-role" class="block text-xs font-bold text-on-surface mb-1.5">Rol de Acceso *</label>
             <select id="edit-user-role" class="w-full h-11 px-3 rounded-xl bg-surface-container-low text-on-surface text-sm border border-outline-variant/30 focus:border-primary font-bold">
               <option value="vecino">Vecino Verificado</option>
               <option value="trabajador">Funcionario Municipal</option>
@@ -2145,7 +2195,7 @@
         </div>
 
         <div>
-          <label class="block text-xs font-bold text-on-surface mb-1.5">Departamento / Junta / Unidad</label>
+          <label for="edit-user-dept" class="block text-xs font-bold text-on-surface mb-1.5">Departamento / Junta / Unidad</label>
           <input type="text" id="edit-user-dept" placeholder="Ej: Junta de Vecinos / Obras" class="w-full h-11 px-4 rounded-xl bg-surface-container-low text-on-surface text-sm border border-outline-variant/30 focus:border-primary">
         </div>
 
@@ -2207,7 +2257,7 @@
   <!-- ============================================================== -->
   <!-- MODAL CENTRO DE CONFIGURACIÓN DEL SISTEMA, CUENTA Y APARIENCIA -->
   <!-- ============================================================== -->
-  <div id="modal-system-settings" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-3 sm:p-4">
+  <div id="modal-system-settings" role="dialog" aria-modal="true" aria-labelledby="modal-system-settings-title" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-3 sm:p-4">
     <div class="bg-surface-container-lowest rounded-3xl max-w-2xl w-full max-h-[92dvh] flex flex-col overflow-hidden shadow-2xl border border-outline-variant/30 animate-scale-up">
       
       <!-- Cabecera del Modal -->
@@ -2218,10 +2268,10 @@
           </div>
           <div class="min-w-0">
             <span class="text-[10px] font-bold text-primary uppercase tracking-wider block leading-none">Preferencias, Seguridad & Tema</span>
-            <h3 class="text-base sm:text-lg font-bold text-on-surface leading-tight truncate mt-0.5">Configuración del Sistema</h3>
+            <h3 id="modal-system-settings-title" class="text-base sm:text-lg font-bold text-on-surface leading-tight truncate mt-0.5">Configuración del Sistema</h3>
           </div>
         </div>
-        <button id="btn-close-system-settings" type="button" class="w-8 h-8 rounded-full bg-surface-container text-on-surface-variant flex items-center justify-center hover:bg-surface-container-high transition-all shrink-0">
+        <button id="btn-close-system-settings" type="button" aria-label="Cerrar configuración" class="w-8 h-8 rounded-full bg-surface-container text-on-surface-variant flex items-center justify-center hover:bg-surface-container-high transition-all shrink-0">
           <span class="material-symbols-outlined text-[18px]">close</span>
         </button>
       </div>
@@ -2419,19 +2469,19 @@
 
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label class="block text-[11px] font-bold text-on-surface mb-1">Nombre Completo *</label>
+                  <label for="settings-profile-name" class="block text-[11px] font-bold text-on-surface mb-1">Nombre Completo *</label>
                   <input type="text" id="settings-profile-name" required class="w-full h-10 px-3.5 rounded-xl bg-surface-container-low text-on-surface text-xs border border-outline-variant/30 focus:border-primary">
                 </div>
                 <div>
-                  <label class="block text-[11px] font-bold text-on-surface mb-1">Correo Electrónico *</label>
+                  <label for="settings-profile-email" class="block text-[11px] font-bold text-on-surface mb-1">Correo Electrónico *</label>
                   <input type="email" id="settings-profile-email" required class="w-full h-10 px-3.5 rounded-xl bg-surface-container-low text-on-surface text-xs border border-outline-variant/30 focus:border-primary">
                 </div>
                 <div>
-                  <label class="block text-[11px] font-bold text-on-surface mb-1">RUT / Identificación</label>
+                  <label for="settings-profile-rut" class="block text-[11px] font-bold text-on-surface mb-1">RUT / Identificación</label>
                   <input type="text" id="settings-profile-rut" placeholder="15.234.567-8" class="w-full h-10 px-3.5 rounded-xl bg-surface-container-low text-on-surface text-xs font-mono border border-outline-variant/30 focus:border-primary">
                 </div>
                 <div>
-                  <label class="block text-[11px] font-bold text-on-surface mb-1">Unidad / Junta / Departamento</label>
+                  <label for="settings-profile-dept" class="block text-[11px] font-bold text-on-surface mb-1">Unidad / Junta / Departamento</label>
                   <input type="text" id="settings-profile-dept" placeholder="Comunidad / Dirección" class="w-full h-10 px-3.5 rounded-xl bg-surface-container-low text-on-surface text-xs border border-outline-variant/30 focus:border-primary">
                 </div>
               </div>
@@ -2454,9 +2504,13 @@
                 <span class="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">Seguridad</span>
               </div>
 
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
-                  <label class="block text-[11px] font-bold text-on-surface mb-1">Nueva Contraseña *</label>
+                  <label for="settings-current-pwd" class="block text-[11px] font-bold text-on-surface mb-1">Contraseña Actual *</label>
+                  <input type="password" id="settings-current-pwd" required placeholder="Tu contraseña actual" class="w-full h-10 px-3.5 rounded-xl bg-surface-container-low text-on-surface text-xs border border-outline-variant/30 focus:border-primary">
+                </div>
+                <div>
+                  <label for="settings-new-pwd" class="block text-[11px] font-bold text-on-surface mb-1">Nueva Contraseña *</label>
                   <div class="relative flex items-center">
                     <input type="password" id="settings-new-pwd" required minlength="4" placeholder="Mínimo 4 caracteres" class="w-full h-10 pl-3.5 pr-9 rounded-xl bg-surface-container-low text-on-surface text-xs border border-outline-variant/30 focus:border-primary">
                     <button type="button" id="btn-toggle-settings-pwd" class="absolute right-2.5 text-outline hover:text-on-surface">
@@ -2465,7 +2519,7 @@
                   </div>
                 </div>
                 <div>
-                  <label class="block text-[11px] font-bold text-on-surface mb-1">Confirmar Contraseña *</label>
+                  <label for="settings-confirm-pwd" class="block text-[11px] font-bold text-on-surface mb-1">Confirmar Contraseña *</label>
                   <input type="password" id="settings-confirm-pwd" required minlength="4" placeholder="Repite la nueva clave" class="w-full h-10 px-3.5 rounded-xl bg-surface-container-low text-on-surface text-xs border border-outline-variant/30 focus:border-primary">
                 </div>
               </div>
@@ -2634,7 +2688,7 @@
   </div>
 
   <!-- Contenedor de Alertas Toast -->
-  <div id="toast-container" class="fixed top-4 sm:top-12 right-3 sm:right-5 left-3 sm:left-auto max-w-sm z-50 space-y-2 pointer-events-none"></div>
+  <div id="toast-container" role="status" aria-live="polite" class="fixed top-4 sm:top-12 right-3 sm:right-5 left-3 sm:left-auto max-w-sm z-50 space-y-2 pointer-events-none"></div>
 
   <!-- Scripts de la Aplicación -->
   <script src="/js/civiccore.js"></script>
