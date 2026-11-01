@@ -22,7 +22,7 @@
       rutDni: 'Sin DNI',
       department: 'Comunidad'
     },
-    currentView: 'view-nuevo',
+    currentView: 'view-inicio',
     currentFormStep: 1,
     incidents: [],
     stats: null,
@@ -39,29 +39,29 @@
   // Configuración de Vistas Permitidas por Rol
   const ROLE_PERMISSIONS = {
     invitado: {
-      defaultView: 'view-nuevo',
-      allowedViews: ['view-nuevo'],
+      defaultView: 'view-inicio',
+      allowedViews: ['view-inicio', 'view-nuevo'],
       label: 'Invitado',
       badgeClass: 'bg-slate-200 text-slate-800',
-      description: 'Acceso público para generación rápida de reportes urbanos sin credenciales.'
+      description: 'Acceso público para navegación general y generación de reportes urbanos.'
     },
     vecino: {
       defaultView: 'view-vecino',
-      allowedViews: ['view-vecino', 'view-nuevo'],
+      allowedViews: ['view-inicio', 'view-vecino', 'view-nuevo'],
       label: 'Vecino Verificado',
       badgeClass: 'bg-emerald-100 text-emerald-800',
       description: 'Portal vecinal acreditado. Seguimiento de folios y prioridad comunal.'
     },
     trabajador: {
       defaultView: 'view-incidencias',
-      allowedViews: ['view-incidencias', 'view-mapa', 'view-panel', 'view-nuevo'],
+      allowedViews: ['view-inicio', 'view-incidencias', 'view-mapa', 'view-panel', 'view-nuevo'],
       label: 'Funcionario Municipal',
       badgeClass: 'bg-blue-100 text-blue-800',
       description: 'Mando operativo municipal: bandeja de triaje, mapa georreferenciado y KPIs.'
     },
     admin: {
       defaultView: 'view-admin-hub',
-      allowedViews: ['view-admin-hub', 'view-admin-users', 'view-admin-moderation', 'view-admin-audit', 'view-incidencias', 'view-mapa', 'view-panel', 'view-nuevo'],
+      allowedViews: ['view-inicio', 'view-admin-hub', 'view-admin-users', 'view-admin-moderation', 'view-admin-audit', 'view-incidencias', 'view-mapa', 'view-panel', 'view-nuevo'],
       label: 'Super Administrador',
       badgeClass: 'bg-red-100 text-red-800',
       description: 'Control del sistema: gobernanza de claves, moderación y trazabilidad CGR.'
@@ -240,7 +240,9 @@
     updateHeaderTitles(targetViewId);
 
     // Acciones específicas al ingresar a una vista
-    if (targetViewId === 'view-mapa') {
+    if (targetViewId === 'view-inicio') {
+      renderHomeStats();
+    } else if (targetViewId === 'view-mapa') {
       renderMapPins();
     } else if (targetViewId === 'view-panel') {
       renderDashboardStats();
@@ -281,6 +283,7 @@
 
   function updateHeaderTitles(viewId) {
     const titles = {
+      'view-inicio': { title: 'Portal Cívico Municipal', context: 'Portal Ciudadano' },
       'view-nuevo': { title: 'Generar Reporte Ciudadano', context: 'Ingreso Comunal' },
       'view-vecino': { title: 'Portal Vecinal Ciudadano', context: 'Comunidad Conectada' },
       'view-incidencias': { title: 'Bandeja de Incidencias', context: 'Despacho y Triaje' },
@@ -341,7 +344,7 @@
     if (role === 'invitado') {
       // Para invitado: ocultar sidebar en desktop, barra inferior en móvil y badge de usuario
       if (dom.sidebarDesktop) dom.sidebarDesktop.classList.add('lg:hidden');
-      if (dom.mobileBottomNav) dom.mobileBottomNav.classList.add('hidden');
+      if (dom.mobileBottomNav) dom.mobileBottomNav.classList.remove('hidden');
       if (dom.currentUserBadge) {
         dom.currentUserBadge.classList.add('hidden');
         dom.currentUserBadge.classList.remove('flex');
@@ -377,13 +380,18 @@
 
     if (role === 'invitado') {
       sidebarHtml = `
-        <div class="px-3 py-2 text-[10px] font-bold text-outline uppercase tracking-wider">Menú Invitado</div>
-        <button data-target="view-nuevo" class="sidebar-nav-item active w-full flex items-center justify-between px-3.5 py-3 rounded-xl font-bold text-xs transition-all text-primary bg-surface-container-high shadow-sm">
+        <div class="px-3 py-2 text-[10px] font-bold text-outline uppercase tracking-wider">Menú Ciudadano</div>
+        <button data-target="view-inicio" class="sidebar-nav-item active w-full flex items-center justify-between px-3.5 py-3 rounded-xl font-bold text-xs transition-all text-primary bg-surface-container-high shadow-sm">
+          <div class="flex items-center gap-2.5">
+            <span class="material-symbols-outlined text-[20px]">home</span>
+            <span>Inicio Municipal</span>
+          </div>
+        </button>
+        <button data-target="view-nuevo" class="sidebar-nav-item w-full flex items-center justify-between px-3.5 py-3 rounded-xl font-medium text-xs text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-all">
           <div class="flex items-center gap-2.5">
             <span class="material-symbols-outlined text-[20px]">add_alert</span>
             <span>Generar Reporte</span>
           </div>
-          <span class="px-1.5 py-0.5 rounded-full bg-primary text-on-primary text-[10px] font-bold">1</span>
         </button>
         <button onclick="window.civicApp.openAuthModal()" class="w-full flex items-center gap-2.5 px-3.5 py-3 rounded-xl font-medium text-xs text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-all mt-2">
           <span class="material-symbols-outlined text-[20px]">vpn_key</span>
@@ -393,6 +401,12 @@
     } else if (role === 'vecino') {
       sidebarHtml = `
         <div class="px-3 py-2 text-[10px] font-bold text-outline uppercase tracking-wider">Menú Vecinal</div>
+        <button data-target="view-inicio" class="sidebar-nav-item w-full flex items-center justify-between px-3.5 py-3 rounded-xl font-medium text-xs text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-all">
+          <div class="flex items-center gap-2.5">
+            <span class="material-symbols-outlined text-[20px]">home</span>
+            <span>Inicio Municipal</span>
+          </div>
+        </button>
         <button data-target="view-vecino" class="sidebar-nav-item active w-full flex items-center justify-between px-3.5 py-3 rounded-xl font-bold text-xs transition-all text-primary bg-surface-container-high shadow-sm">
           <div class="flex items-center gap-2.5">
             <span class="material-symbols-outlined text-[20px]">cottage</span>
@@ -411,6 +425,12 @@
     } else if (role === 'trabajador') {
       sidebarHtml = `
         <div class="px-3 py-2 text-[10px] font-bold text-outline uppercase tracking-wider">Operaciones Municipales</div>
+        <button data-target="view-inicio" class="sidebar-nav-item w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-medium text-xs text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-all">
+          <div class="flex items-center gap-2">
+            <span class="material-symbols-outlined text-[18px]">home</span>
+            <span>Inicio Municipal</span>
+          </div>
+        </button>
         <button data-target="view-incidencias" class="sidebar-nav-item active w-full flex items-center justify-between px-3.5 py-3 rounded-xl font-bold text-xs transition-all text-primary bg-surface-container-high shadow-sm">
           <div class="flex items-center gap-2.5">
             <span class="material-symbols-outlined text-[20px]">assignment</span>
@@ -463,6 +483,12 @@
         </button>
         <div class="pt-3 border-t border-outline-variant/20">
           <div class="px-3 py-1 text-[10px] font-bold text-outline uppercase tracking-wider">Supervisión Comunal</div>
+          <button data-target="view-inicio" class="sidebar-nav-item w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-medium text-xs text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-all">
+            <div class="flex items-center gap-2">
+              <span class="material-symbols-outlined text-[18px]">home</span>
+              <span>Portal de Inicio</span>
+            </div>
+          </button>
           <button data-target="view-incidencias" class="sidebar-nav-item w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-medium text-xs text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-all">
             <div class="flex items-center gap-2">
               <span class="material-symbols-outlined text-[18px]">assignment</span>
@@ -487,7 +513,11 @@
     let mobileHtml = '';
     if (role === 'invitado') {
       mobileHtml = `
-        <button data-target="view-nuevo" class="mobile-nav-btn active flex-1 py-1 flex flex-col items-center justify-center text-primary font-bold">
+        <button data-target="view-inicio" class="mobile-nav-btn active flex-1 py-1 flex flex-col items-center justify-center text-primary font-bold">
+          <span class="material-symbols-outlined text-[22px]">home</span>
+          <span class="text-[10px] mt-0.5">Inicio</span>
+        </button>
+        <button data-target="view-nuevo" class="mobile-nav-btn flex-1 py-1 flex flex-col items-center justify-center text-on-surface-variant">
           <span class="material-symbols-outlined text-[22px]">add_circle</span>
           <span class="text-[10px] mt-0.5">Reportar</span>
         </button>
@@ -1970,7 +2000,7 @@
 
     // 3. Reconfigurar interfaz y cambiar a la vista de reporte ciudadano
     renderNavForRole('invitado');
-    switchView('view-nuevo');
+    switchView('view-inicio');
 
     // 4. Mostrar confirmación visual al usuario
     showToast('Sesión cerrada con éxito. Regresaste a modo invitado público.', 'info');
@@ -3314,8 +3344,133 @@
   // ==========================================
   // Exposición a Window (API de Utilidad Pública)
   // ==========================================
+
+  // ==========================================
+  // Funciones de la Página de Inicio (Landing Page)
+  // ==========================================
+  function renderHomeStats() {
+    const totalEl = document.getElementById('home-kpi-total');
+    const inProgressEl = document.getElementById('home-kpi-progreso');
+    const resolvedEl = document.getElementById('home-kpi-resueltas');
+    const rateEl = document.getElementById('home-kpi-eficiencia');
+
+    const total = state.incidents.length;
+    const resolved = state.incidents.filter(i => i.status === 'resolved').length;
+    const inProgress = state.incidents.filter(i => i.status === 'in_progress').length;
+    const rate = total > 0 ? Math.round(((resolved + (inProgress * 0.5)) / total) * 100) : 94;
+
+    if (totalEl) totalEl.textContent = total || '48+';
+    if (inProgressEl) inProgressEl.textContent = inProgress || '12';
+    if (resolvedEl) resolvedEl.textContent = resolved || '36';
+    if (rateEl) rateEl.textContent = `${rate}%`;
+  }
+
+  async function handleHomeFolioSearch() {
+    const input = document.getElementById('home-folio-input');
+    const val = (input ? input.value : '').trim();
+    if (!val) {
+      showToast('Ingresa un número de folio para rastrear', 'info');
+      return;
+    }
+
+    const clean = val.replace('#', '').toUpperCase();
+    let found = state.incidents.find(i => (i.id && i.id.toUpperCase() === clean) || (i.folio && i.folio.toUpperCase().includes(clean)));
+
+    if (!found) {
+      try {
+        const queryId = clean.startsWith('CIV-') ? clean : `CIV-${clean}`;
+        const res = await fetch(`/api/incidents/${queryId}`);
+        if (res.ok) {
+          const json = await res.json();
+          found = json.data;
+        }
+      } catch (e) {}
+    }
+
+    const resultBox = document.getElementById('home-folio-result-box');
+    const notFoundBox = document.getElementById('home-folio-not-found');
+
+    if (!found) {
+      if (resultBox) resultBox.classList.add('hidden');
+      if (notFoundBox) {
+        notFoundBox.classList.remove('hidden');
+        const notFoundCode = document.getElementById('home-not-found-folio-code');
+        if (notFoundCode) notFoundCode.textContent = clean;
+      }
+      showToast(`No se encontró reporte con folio #${clean}`, 'error');
+      return;
+    }
+
+    if (notFoundBox) notFoundBox.classList.add('hidden');
+    if (resultBox) {
+      resultBox.classList.remove('hidden');
+      const folioEl = document.getElementById('home-res-folio');
+      const titleEl = document.getElementById('home-res-title');
+      const addressEl = document.getElementById('home-res-address');
+      const dateEl = document.getElementById('home-res-date');
+      const statusPill = document.getElementById('home-res-status-pill');
+
+      if (folioEl) folioEl.textContent = found.folio || `#${found.id}`;
+      if (titleEl) titleEl.textContent = found.title;
+      if (addressEl) addressEl.innerHTML = `<span class="material-symbols-outlined text-[15px] shrink-0">pin_drop</span> <span>${found.address || 'Comuna Central'} • Cuadrilla: ${found.assignedTeam || 'En despacho'}</span>`;
+      if (dateEl) dateEl.textContent = found.createdAt ? new Date(found.createdAt).toLocaleDateString('es-CL', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Reciente';
+
+      if (statusPill) {
+        if (found.status === 'resolved') {
+          statusPill.className = 'px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 flex items-center gap-1.5';
+          statusPill.innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-500"></span> Resuelto';
+        } else if (found.status === 'in_progress') {
+          statusPill.className = 'px-3 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-800 dark:bg-blue-950/60 dark:text-blue-300 flex items-center gap-1.5';
+          statusPill.innerHTML = '<span class="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span> En Cuadrilla / Proceso';
+        } else {
+          statusPill.className = 'px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 flex items-center gap-1.5';
+          statusPill.innerHTML = '<span class="w-2 h-2 rounded-full bg-amber-500"></span> Pendiente de Triaje';
+        }
+      }
+
+      const btnViewModal = document.getElementById('home-btn-view-modal');
+      if (btnViewModal) {
+        btnViewModal.onclick = () => openIncidentModal(found.id);
+      }
+    }
+
+    showToast(`Folio ${found.folio || found.id} localizado exitosamente`, 'success');
+  }
+
+  function scrollToHomeTracker() {
+    if (state.currentView !== 'view-inicio') {
+      switchView('view-inicio');
+    }
+    setTimeout(() => {
+      const el = document.getElementById('seccion-rastreo-inicio');
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        const input = document.getElementById('home-folio-input');
+        if (input) input.focus();
+      }
+    }, 120);
+  }
+
+  function reportCategory(categoryValue) {
+    switchView('view-nuevo');
+    setTimeout(() => {
+      setFormStep(1);
+      const radio = document.querySelector(`input[name="category"][value="${categoryValue}"]`);
+      if (radio) {
+        radio.checked = true;
+        radio.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+      const scrollEl = document.getElementById('main-scroll-container');
+      if (scrollEl) scrollEl.scrollTo({ top: 0, behavior: 'smooth' });
+    }, 80);
+  }
+
   window.civicApp = {
     switchView,
+    renderHomeStats,
+    handleHomeFolioSearch,
+    scrollToHomeTracker,
+    reportCategory,
     quickLogin,
     logout,
     openAuthModal,
