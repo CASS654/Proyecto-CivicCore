@@ -195,18 +195,52 @@
           </div>
 
           <!-- Lado Derecho: Estado, Usuario, Tema & Configuración -->
-          <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
-            <span id="system-badge-live" class="hidden md:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-tertiary-fixed text-on-tertiary">
+          <div class="flex items-center gap-1 sm:gap-1.5 lg:gap-2 shrink-0">
+            <span id="system-badge-live" class="hidden xl:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-tertiary-fixed text-on-tertiary">
               <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
               <span>Online</span>
             </span>
-
             <!-- Usuario Activo (oculto en modo invitado) -->
-            <div id="current-user-badge" class="hidden items-center gap-1.5 px-2 sm:px-2.5 py-1 rounded-xl bg-surface-container-low text-on-surface font-medium text-xs border border-outline-variant/30">
-              <span class="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span>
-              <span id="user-display-name" class="max-w-[70px] sm:max-w-[130px] truncate inline-block">Invitado</span>
-              <span id="user-display-role" class="hidden sm:inline-block px-1.5 py-0.5 rounded-full bg-primary/10 text-primary font-bold uppercase text-[9px]">Público</span>
-            </div>
+<!-- Usuario activo: adaptable a móvil, tablet y escritorio -->
+          <div
+            id="current-user-badge"
+            title="Sesión activa"
+            aria-label="Sesión activa"
+            class="hidden items-center justify-center gap-1.5
+                  min-w-0 max-w-[40px]
+                  sm:max-w-[115px]
+                  lg:max-w-[155px]
+                  xl:max-w-[200px]
+                  px-2 sm:px-2.5 py-1
+                  rounded-xl bg-surface-container-low
+                  text-on-surface font-medium text-xs
+                  border border-outline-variant/30
+                  overflow-hidden shrink-0"
+          >
+            <span
+              class="w-2 h-2 rounded-full
+                    bg-emerald-500 shrink-0"
+            ></span>
+
+            <span
+              id="user-display-name"
+              class="hidden sm:block min-w-0 flex-1
+                    truncate whitespace-nowrap"
+            >
+              Invitado
+            </span>
+
+            <span
+              id="user-display-role"
+              class="hidden xl:inline-block shrink-0
+                    px-1.5 py-0.5 rounded-full
+                    bg-primary/10 text-primary
+                    font-bold uppercase text-[9px]"
+            >
+              Público
+            </span>
+          </div>
+
 
             <!-- Botón Iniciar Sesión / Cerrar Sesión -->
             <button id="btn-open-auth-modal" class="px-2.5 sm:px-3.5 py-1.5 rounded-xl bg-primary text-on-primary hover:bg-primary-container font-bold text-[11px] sm:text-xs flex items-center gap-1 sm:gap-1.5 shadow-sm transition-all active:scale-95 whitespace-nowrap shrink-0">
@@ -629,6 +663,25 @@
             </div>
 
             <h2 class="text-xl sm:text-2xl font-bold text-on-surface leading-tight">Registrar Incidencia Ciudadana</h2>
+
+
+              <div class="mt-4 flex justify-end">
+                <button
+                  type="button"
+                  id="btn-cancel-incident"
+                  class="inline-flex items-center justify-center gap-2
+                        px-4 py-2.5 rounded-xl border border-red-300
+                        text-red-600 font-semibold text-sm
+                        hover:bg-red-50 dark:hover:bg-red-950/20
+                        transition-all"
+                >
+                  <span class="material-symbols-outlined text-[18px]">
+                    close
+                  </span>
+                  Cancelar reporte
+                </button>
+              </div>
+
             <p class="text-xs sm:text-sm text-on-surface-variant mt-1">Completa los datos del incidente urbano para su derivación comunal y asignación a cuadrillas.</p>
 
             <!-- Barra de Progreso de 3 Pasos -->
@@ -2003,6 +2056,62 @@
     </div>
   </div>
 
+
+<!-- Confirmación para cancelar reporte -->
+<div
+  id="modal-cancel-incident"
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="cancel-incident-title"
+  aria-describedby="cancel-incident-description"
+  class="fixed inset-0 z-[60] hidden items-center
+         justify-center bg-black/60 backdrop-blur-sm p-4"
+>
+  <div class="w-full max-w-md rounded-2xl
+              bg-surface-container-lowest
+              text-on-surface shadow-2xl p-6">
+
+    <div class="flex items-center gap-3 mb-4">
+      <span class="material-symbols-outlined
+                   text-red-600 text-3xl">
+        warning
+      </span>
+
+      <h3 id="cancel-incident-title"
+          class="text-lg font-bold">
+        ¿Deseas cancelar el reporte?
+      </h3>
+    </div>
+
+    <p id="cancel-incident-description"
+       class="text-sm text-on-surface-variant mb-6">
+      La información ingresada se perderá
+      y el reporte no será enviado.
+    </p>
+
+    <div class="flex flex-col-reverse sm:flex-row gap-3">
+      <button
+        type="button"
+        id="btn-continue-incident"
+        class="flex-1 px-4 py-3 rounded-xl
+               bg-surface-container
+               text-on-surface font-semibold text-sm"
+      >
+        Continuar editando
+      </button>
+
+      <button
+        type="button"
+        id="btn-discard-incident"
+        class="flex-1 px-4 py-3 rounded-xl
+               bg-red-600 hover:bg-red-700
+               text-white font-semibold text-sm"
+      >
+        Descartar reporte
+      </button>
+    </div>
+  </div>
+</div>
   <!-- ============================================================== -->
   <!-- MODAL DE ÉXITO Y COMPROBANTE OFICIAL DE REPORTE CIUDADANO -->
   <!-- ============================================================== -->
@@ -2277,7 +2386,15 @@
       </div>
 
       <!-- Barra de Pestañas (Tabs) de Configuración -->
-      <div class="px-4 sm:px-6 pt-2.5 pb-2 border-b border-outline-variant/20 bg-surface-container-low/30 flex items-center gap-1.5 overflow-x-auto no-scrollbar shrink-0">
+      <div id="settings-tabs-container"
+              class="px-4 sm:px-6 pt-2.5 pb-2 border-b
+                    border-outline-variant/20
+                    bg-surface-container-low/30
+                    grid grid-cols-2 sm:flex
+                    items-stretch sm:items-center
+                    gap-2 sm:gap-1.5
+                    shrink-0"
+            >
         <button type="button" data-settings-tab="appearance" class="settings-tab-btn active shrink-0 px-3.5 py-2 rounded-xl font-bold text-xs flex items-center gap-1.5 bg-primary text-on-primary shadow-sm transition-all">
           <span class="material-symbols-outlined text-[16px]">palette</span>
           <span>Apariencia y Tema</span>

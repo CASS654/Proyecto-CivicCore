@@ -429,10 +429,6 @@
     if (headerQuickNav) {
       if (role === 'vecino') {
         headerQuickNav.innerHTML = `
-          <button data-target="view-inicio" onclick="window.civicApp.switchView('view-inicio')" class="header-nav-btn px-2.5 py-1.5 rounded-xl text-xs font-semibold text-on-surface hover:bg-surface-container transition-all flex items-center gap-1.5 shrink-0">
-            <span class="material-symbols-outlined text-[16px] text-primary">home</span>
-            <span>Inicio</span>
-          </button>
           <button data-target="view-vecino" onclick="window.civicApp.switchView('view-vecino')" class="header-nav-btn px-2.5 py-1.5 rounded-xl text-xs font-semibold text-on-surface hover:bg-surface-container transition-all flex items-center gap-1.5 shrink-0">
             <span class="material-symbols-outlined text-[16px] text-primary">cottage</span>
             <span>Portal Vecinal</span>
@@ -444,10 +440,7 @@
         `;
       } else if (role === 'trabajador') {
         headerQuickNav.innerHTML = `
-          <button data-target="view-inicio" onclick="window.civicApp.switchView('view-inicio')" class="header-nav-btn px-2.5 py-1.5 rounded-xl text-xs font-semibold text-on-surface hover:bg-surface-container transition-all flex items-center gap-1.5 shrink-0">
-            <span class="material-symbols-outlined text-[16px] text-primary">home</span>
-            <span>Inicio</span>
-          </button>
+
           <button data-target="view-incidencias" onclick="window.civicApp.switchView('view-incidencias')" class="header-nav-btn px-2.5 py-1.5 rounded-xl text-xs font-semibold text-on-surface hover:bg-surface-container transition-all flex items-center gap-1.5 shrink-0">
             <span class="material-symbols-outlined text-[16px] text-primary">assignment</span>
             <span>Bandeja</span>
@@ -486,10 +479,6 @@
           <button data-target="view-incidencias" onclick="window.civicApp.switchView('view-incidencias')" class="header-nav-btn px-2.5 py-1.5 rounded-xl text-xs font-semibold text-on-surface hover:bg-surface-container transition-all flex items-center gap-1.5 shrink-0">
             <span class="material-symbols-outlined text-[16px] text-primary">assignment</span>
             <span>Bandeja</span>
-          </button>
-          <button data-target="view-inicio" onclick="window.civicApp.switchView('view-inicio')" class="header-nav-btn px-2.5 py-1.5 rounded-xl text-xs font-semibold text-on-surface hover:bg-surface-container transition-all flex items-center gap-1.5 shrink-0">
-            <span class="material-symbols-outlined text-[16px] text-primary">home</span>
-            <span>Inicio</span>
           </button>
         `;
       } else {
@@ -537,12 +526,6 @@
     } else if (role === 'vecino') {
       sidebarHtml = `
         <div class="px-3 py-2 text-[10px] font-bold text-outline uppercase tracking-wider">Menú Vecinal</div>
-        <button data-target="view-inicio" class="sidebar-nav-item w-full flex items-center justify-between px-3.5 py-3 rounded-xl font-medium text-xs text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-all">
-          <div class="flex items-center gap-2.5">
-            <span class="material-symbols-outlined text-[20px]">home</span>
-            <span>Inicio Municipal</span>
-          </div>
-        </button>
         <button data-target="view-vecino" class="sidebar-nav-item active w-full flex items-center justify-between px-3.5 py-3 rounded-xl font-bold text-xs transition-all text-primary bg-surface-container-high shadow-sm">
           <div class="flex items-center gap-2.5">
             <span class="material-symbols-outlined text-[20px]">cottage</span>
@@ -561,12 +544,6 @@
     } else if (role === 'trabajador') {
       sidebarHtml = `
         <div class="px-3 py-2 text-[10px] font-bold text-outline uppercase tracking-wider">Operaciones Municipales</div>
-        <button data-target="view-inicio" class="sidebar-nav-item w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-medium text-xs text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-all">
-          <div class="flex items-center gap-2">
-            <span class="material-symbols-outlined text-[18px]">home</span>
-            <span>Inicio Municipal</span>
-          </div>
-        </button>
         <button data-target="view-incidencias" class="sidebar-nav-item active w-full flex items-center justify-between px-3.5 py-3 rounded-xl font-bold text-xs transition-all text-primary bg-surface-container-high shadow-sm">
           <div class="flex items-center gap-2.5">
             <span class="material-symbols-outlined text-[20px]">assignment</span>
@@ -619,12 +596,6 @@
         </button>
         <div class="pt-3 border-t border-outline-variant/20">
           <div class="px-3 py-1 text-[10px] font-bold text-outline uppercase tracking-wider">Supervisión Comunal</div>
-          <button data-target="view-inicio" class="sidebar-nav-item w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-medium text-xs text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-all">
-            <div class="flex items-center gap-2">
-              <span class="material-symbols-outlined text-[18px]">home</span>
-              <span>Portal de Inicio</span>
-            </div>
-          </button>
           <button data-target="view-incidencias" class="sidebar-nav-item w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-medium text-xs text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-all">
             <div class="flex items-center gap-2">
               <span class="material-symbols-outlined text-[18px]">assignment</span>
@@ -738,10 +709,17 @@
     });
 
     // 5. Actualizar Widgets de Perfil
-    if (dom.userDisplayName) dom.userDisplayName.textContent = state.currentUser.name;
+    if (dom.userDisplayName) {
+      dom.userDisplayName.textContent = state.currentUser.name;
+      dom.userDisplayName.title = state.currentUser.name;
+    }
+
     if (dom.userDisplayRole) {
       dom.userDisplayRole.textContent = state.currentUser.role;
-      dom.userDisplayRole.className = `hidden sm:inline-block px-1.5 py-0.5 rounded-full font-bold uppercase text-[9px] ${roleConfig.badgeClass}`;
+      dom.userDisplayRole.className =
+        `hidden xl:inline-block shrink-0 px-1.5 py-0.5 ` +
+        `rounded-full font-bold uppercase text-[9px] ` +
+        `${roleConfig.badgeClass}`;
     }
     if (dom.sidebarUserName) dom.sidebarUserName.textContent = state.currentUser.name;
     if (dom.sidebarUserRole) dom.sidebarUserRole.textContent = `${roleConfig.label}`;
@@ -1869,6 +1847,26 @@
       modal.classList.remove('flex');
     }
   }
+
+
+function openCancelIncidentModal() {
+  const modal = document.getElementById('modal-cancel-incident');
+  if (!modal) return;
+
+  modal.classList.remove('hidden');
+  modal.classList.add('flex');
+
+  document.getElementById('btn-continue-incident')?.focus();
+}
+
+function closeCancelIncidentModal() {
+  const modal = document.getElementById('modal-cancel-incident');
+  if (!modal) return;
+
+  modal.classList.add('hidden');
+  modal.classList.remove('flex');
+}
+
 
   let uploadedCustomPhotoBase64 = null;
 
@@ -3339,6 +3337,45 @@
 
     if (dom.form) dom.form.addEventListener('submit', handleFormSubmit);
 
+
+    // CC-02: Cancelación del reporte ciudadano
+    const btnCancelIncident = document.getElementById('btn-cancel-incident');
+    const btnContinueIncident = document.getElementById('btn-continue-incident');
+    const btnDiscardIncident = document.getElementById('btn-discard-incident');
+    const modalCancelIncident = document.getElementById('modal-cancel-incident');
+
+    if (btnCancelIncident) {
+      btnCancelIncident.addEventListener('click', openCancelIncidentModal);
+    }
+
+    if (btnContinueIncident) {
+      btnContinueIncident.addEventListener('click', closeCancelIncidentModal);
+    }
+
+    if (btnDiscardIncident) {
+      btnDiscardIncident.addEventListener('click', () => {
+        closeCancelIncidentModal();
+
+        // Descartar los datos que todavía no se enviaron
+        if (dom.form) dom.form.reset();
+        removeCustomPhoto();
+        setFormStep(1);
+
+        // Volver al inicio
+        switchView('view-inicio');
+        showToast('Reporte cancelado. No se guardaron los datos.', 'info');
+      });
+    }
+
+    if (modalCancelIncident) {
+      modalCancelIncident.addEventListener('click', (e) => {
+        if (e.target === modalCancelIncident) {
+          closeCancelIncidentModal();
+        }
+      });
+    }
+
+
     // Botones del Modal de Comprobante / Éxito
     const btnSuccessNew = document.getElementById('btn-success-new-report');
     if (btnSuccessNew) {
@@ -3354,7 +3391,10 @@
 
     const btnCloseSuccess = document.getElementById('btn-close-success-modal');
     if (btnCloseSuccess) {
-      btnCloseSuccess.addEventListener('click', closeReportSuccessModal);
+      btnCloseSuccess.addEventListener('click', () => {
+          closeReportSuccessModal();
+          switchView('view-inicio');
+        });
     }
 
     const modalSuccessEl = document.getElementById('modal-report-success');

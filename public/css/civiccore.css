@@ -460,3 +460,58 @@ input:focus, select:focus, textarea:focus {
   pointer-events: none;
 }
 
+
+/* =========================================
+   CC-04: Centro de Configuración Responsive
+   ========================================= */
+
+/* Celulares */
+@media (max-width: 639px) {
+
+  #settings-tabs-container {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  #settings-tabs-container .settings-tab-btn {
+    width: 100%;
+    min-width: 0;
+    min-height: 68px;
+    padding: 10px 8px;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+
+    text-align: center;
+    white-space: normal;
+    line-height: 1.3;
+  }
+
+  #settings-tabs-container .settings-tab-btn span:last-child {
+    overflow-wrap: anywhere;
+  }
+
+  #settings-tabs-container .settings-tab-btn
+  .material-symbols-outlined {
+    font-size: 21px;
+    flex-shrink: 0;
+  }
+}
+
+/* Tablets y computadoras */
+@media (min-width: 640px) {
+
+  #settings-tabs-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  #settings-tabs-container .settings-tab-btn {
+    flex-shrink: 0;
+  }
+}
