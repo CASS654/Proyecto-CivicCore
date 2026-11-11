@@ -2,6 +2,7 @@
  * Middleware para rutas no encontradas (404)
  */
 function notFoundHandler(req, res, next) {
+  // shortcut: req.originalUrl se inserta en el HTML sin escapar; escaparlo antes de publicar el servidor
   if (req.accepts('html')) {
     return res.status(404).send(`
       <!DOCTYPE html>

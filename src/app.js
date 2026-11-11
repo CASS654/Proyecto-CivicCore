@@ -4,6 +4,10 @@ const morgan = require('morgan');
 const config = require('./config');
 const routes = require('./routes');
 const { notFoundHandler, errorHandler } = require('./middlewares/errorHandler');
+const { seedDatabase } = require('./database/seed');
+
+// Abre la base (esquema + migraciones) y siembra datos iniciales si está vacía
+seedDatabase();
 
 const app = express();
 
@@ -15,6 +19,8 @@ app.use(morgan(':date[iso] :remote-addr :method :url :status - :response-time ms
 
 // Middleware de seguridad y parseo de datos
 app.use(cors());
+// shortcut: el frontend acepta fotos de hasta 12 MB, que en base64 pesan ~16 MB y superan este límite;
+// subir el límite a 17mb o bajar el máximo del frontend a 11 MB si aparecen errores 413
 app.use(express.json({ limit: '15mb' }));
 app.use(express.urlencoded({ extended: true, limit: '15mb' }));
 

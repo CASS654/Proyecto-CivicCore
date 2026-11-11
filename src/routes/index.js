@@ -1,9 +1,8 @@
 const express = require('express');
-const apiRoutes = require('./api');
 
 const router = express.Router();
 
-// Montar rutas de API con prefijo /api
-router.use('/api', apiRoutes);
+// Cada archivo atiende el prefijo de URL que lleva su nombre
+router.use('/api', require('./auth'), require('./incidents'), require('./admin'), require('./system'));
 
 module.exports = router;

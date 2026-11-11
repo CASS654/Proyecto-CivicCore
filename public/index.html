@@ -94,9 +94,9 @@
   <div class="flex-1 flex flex-col lg:flex-row h-full overflow-hidden">
     
     <!-- ============================================================== -->
-    <!-- SIDEBAR DE ESCRITORIO (Deshabilitada permanentemente) -->
+    <!-- SIDEBAR DE ESCRITORIO (vistas internas; no en Inicio y ocultable). js/nav.js agrega lg:flex cuando corresponde -->
     <!-- ============================================================== -->
-    <aside id="sidebar-desktop" class="hidden">
+    <aside id="sidebar-desktop" class="hidden flex-col w-72 bg-surface-container-low border-r border-outline-variant/30 shrink-0 h-full z-40">
       <!-- Marca Municipal y Logo -->
       <div class="h-16 px-6 flex items-center justify-between border-b border-outline-variant/20 shrink-0">
         <div class="flex items-center gap-3 cursor-pointer group hover:opacity-90 transition-opacity" onclick="window.civicApp.switchView('view-inicio')" title="Ir a la página de inicio">
@@ -108,11 +108,14 @@
             <span class="text-lg font-bold text-on-surface leading-tight tracking-tight">CivicCore</span>
           </div>
         </div>
+        <button id="btn-sidebar-collapse" type="button" title="Ocultar barra lateral" aria-label="Ocultar barra lateral" aria-controls="sidebar-desktop" aria-expanded="true" class="w-8 h-8 flex items-center justify-center rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container active:scale-95 transition-all shrink-0">
+          <span class="material-symbols-outlined text-[20px]">menu_open</span>
+        </button>
       </div>
 
       <!-- Botón Destacado Nueva Incidencia (Disponible para Invitado, Vecino y Funcionario) -->
       <div class="p-4 pb-2 shrink-0" id="sidebar-action-container">
-        <button id="btn-sidebar-nuevo" class="w-full flex items-center justify-center gap-2 py-3 px-4 bg-primary text-on-primary rounded-xl font-semibold shadow-md hover:bg-primary-container active:scale-[0.98] transition-all">
+        <button id="btn-sidebar-nuevo" onclick="window.civicApp.switchView('view-nuevo')" class="w-full flex items-center justify-center gap-2 py-3 px-4 bg-primary text-on-primary rounded-xl font-semibold shadow-md hover:bg-primary-container active:scale-[0.98] transition-all">
           <span class="material-symbols-outlined text-[20px]">add_circle</span>
           <span id="btn-sidebar-nuevo-text">Generar Reporte</span>
         </button>
@@ -120,7 +123,7 @@
 
       <!-- Menú de Navegación Principal Dinámico según Rol -->
       <nav id="sidebar-nav-menu" class="flex-1 px-4 py-2 space-y-1.5 overflow-y-auto">
-        <!-- Renderizado dinámicamente según el rol en civiccore.js -->
+        <!-- Renderizado según el rol en js/nav.js -->
       </nav>
 
       <!-- Perfil Activo en Barra Lateral -->
@@ -156,9 +159,13 @@
       <header class="shrink-0 z-30 w-full bg-surface/90 backdrop-blur-xl border-b border-outline-variant/20 shadow-sm">
         <div class="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 h-14 flex items-center justify-between gap-2 sm:gap-4">
           
-          <!-- Lado Izquierdo: Título de Vista y Navegación Rápida -->
+          <!-- Lado Izquierdo: mostrar barra lateral, logo, navegación de portada y título (visibilidad según la vista en js/nav.js) -->
           <div class="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
-            <button onclick="window.civicApp.switchView('view-inicio')" class="flex items-center gap-2 hover:opacity-85 transition-opacity text-left shrink-0 group" title="Ir a la Página de Inicio">
+            <button id="btn-sidebar-expand" type="button" title="Mostrar barra lateral" aria-label="Mostrar barra lateral" aria-controls="sidebar-desktop" aria-expanded="false" class="hidden w-9 h-9 items-center justify-center rounded-xl bg-surface-container-high hover:bg-surface-variant text-on-surface active:scale-95 transition-all shrink-0">
+              <span class="material-symbols-outlined text-[20px]">menu</span>
+            </button>
+
+            <button id="header-logo" onclick="window.civicApp.switchView('view-inicio')" class="flex items-center gap-2 hover:opacity-85 transition-opacity text-left shrink-0 group" title="Ir a la Página de Inicio">
               <div class="w-8 h-8 rounded-xl bg-primary text-on-primary flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform">
                 <span class="material-symbols-outlined text-[18px]">account_balance</span>
               </div>
@@ -167,26 +174,14 @@
                 <span class="text-xs sm:text-sm font-black text-on-surface tracking-tight leading-none">CivicCore</span>
               </div>
             </button>
-            
-            <div class="h-5 w-px bg-outline-variant/30 hidden sm:block shrink-0"></div>
 
-            <!-- Botones de Navegación Rápida en Header (Desktop y Tablet) -->
-            <nav class="hidden md:flex items-center gap-1 shrink-0" id="header-quick-nav">
-              <button onclick="window.civicApp.switchView('view-inicio')" class="px-2.5 py-1.5 rounded-xl text-xs font-semibold text-on-surface hover:bg-surface-container transition-all flex items-center gap-1.5">
-                <span class="material-symbols-outlined text-[16px] text-primary">home</span>
-                <span>Inicio</span>
-              </button>
-              <button onclick="window.civicApp.switchView('view-nuevo')" class="px-2.5 py-1.5 rounded-xl text-xs font-semibold text-on-surface hover:bg-surface-container transition-all flex items-center gap-1.5">
-                <span class="material-symbols-outlined text-[16px] text-primary">add_circle</span>
-                <span>Reportar</span>
-              </button>
-              <button onclick="window.civicApp.scrollToHomeTracker()" class="px-2.5 py-1.5 rounded-xl text-xs font-semibold text-on-surface hover:bg-surface-container transition-all flex items-center gap-1.5">
-                <span class="material-symbols-outlined text-[16px] text-primary">search</span>
-                <span>Rastrear Folio</span>
-              </button>
-            </nav>
+            <!-- Navegación rápida del header: solo en la portada (Inicio), como antes -->
+            <div id="header-home-nav" class="flex items-center gap-2 sm:gap-3 shrink-0">
+              <div class="h-5 w-px bg-outline-variant/30 hidden sm:block shrink-0"></div>
+              <nav class="hidden md:flex items-center gap-1 shrink-0" id="header-quick-nav"></nav>
+            </div>
 
-            <div class="min-w-0 flex-1 hidden xl:block border-l border-outline-variant/30 pl-3">
+            <div id="header-title-block" class="min-w-0 flex-1 hidden xl:block border-l border-outline-variant/30 pl-3">
               <span id="header-context-tag" class="text-[9px] font-bold text-primary uppercase tracking-wider block">Portal Ciudadano</span>
               <h1 id="header-view-title" class="text-xs font-bold text-on-surface tracking-tight leading-tight truncate">
                 Portal Cívico Municipal
@@ -584,61 +579,6 @@
             </div>
           </footer>
 
-          <!-- Script de Animación al Bajar la Página (Encogimiento de Título + Aparición inteligente en Viewport) -->
-          <script>
-            (function() {
-              const scrollContainer = document.getElementById('main-scroll-container');
-              const heroTitle = document.getElementById('hero-main-title');
-              const heroSubtitle = document.getElementById('hero-subtitle-text');
-              const scrollItems = document.querySelectorAll('#view-inicio .cc-scroll-item');
-
-              function onScrollUpdate() {
-                if (!scrollContainer || !heroTitle) return;
-                const scrollTop = scrollContainer.scrollTop || window.scrollY || 0;
-                const maxScroll = 280;
-                const progress = Math.min(Math.max(scrollTop / maxScroll, 0), 1);
-                const scale = 1 - (progress * 0.44);
-                const translateY = progress * 12;
-                const marginBottom = -(progress * 95);
-                heroTitle.style.transform = 'translate3d(0, ' + translateY.toFixed(1) + 'px, 0) scale(' + scale.toFixed(3) + ')';
-                heroTitle.style.marginBottom = marginBottom.toFixed(1) + 'px';
-
-                if (heroSubtitle) {
-                  const subScale = 1 - (progress * 0.1);
-                  heroSubtitle.style.transform = 'scale(' + subScale.toFixed(3) + ')';
-                  heroSubtitle.style.opacity = String(1 - (progress * 0.25));
-                }
-
-                const viewportH = scrollContainer.clientHeight || window.innerHeight;
-                const canScrollEnough = (scrollContainer.scrollHeight - viewportH) > 60;
-
-                scrollItems.forEach((el) => {
-                  if (el.dataset.forceVisible === 'true' || !canScrollEnough) {
-                    el.classList.add('cc-scroll-visible');
-                    el.classList.remove('cc-scroll-hidden');
-                    return;
-                  }
-                  const rect = el.getBoundingClientRect();
-                  if (scrollTop >= 20 || rect.top < viewportH * 0.88) {
-                    if (rect.top < viewportH * 0.94) {
-                      el.classList.add('cc-scroll-visible');
-                      el.classList.remove('cc-scroll-hidden');
-                    }
-                  } else {
-                    el.classList.add('cc-scroll-hidden');
-                    el.classList.remove('cc-scroll-visible');
-                  }
-                });
-              }
-
-              if (scrollContainer) {
-                scrollContainer.addEventListener('scroll', onScrollUpdate, { passive: true });
-              }
-              window.addEventListener('scroll', onScrollUpdate, { passive: true });
-              window.addEventListener('resize', onScrollUpdate, { passive: true });
-              requestAnimationFrame(onScrollUpdate);
-            })();
-          </script>
 
         </section>
 
@@ -1844,7 +1784,7 @@
   <!-- ============================================================== -->
   <nav id="mobile-bottom-nav" class="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-surface/95 backdrop-blur-xl border-t border-outline-variant/20 shadow-lg pb-[env(safe-area-inset-bottom,0px)]">
     <div id="mobile-bottom-nav-container" class="flex justify-around items-center h-16 px-1 max-w-md mx-auto relative">
-      <!-- Rellenado dinámicamente según el rol en civiccore.js -->
+      <!-- Rellenado dinámicamente según el rol en js/nav.js -->
     </div>
   </nav>
 
@@ -2808,6 +2748,6 @@
   <div id="toast-container" role="status" aria-live="polite" class="fixed top-4 sm:top-12 right-3 sm:right-5 left-3 sm:left-auto max-w-sm z-50 space-y-2 pointer-events-none"></div>
 
   <!-- Scripts de la Aplicación -->
-  <script src="/js/civiccore.js"></script>
+  <script type="module" src="/js/civiccore.js"></script>
 </body>
 </html>

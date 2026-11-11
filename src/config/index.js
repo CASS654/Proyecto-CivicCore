@@ -6,6 +6,6 @@ module.exports = {
   host: process.env.HOST || '0.0.0.0',
   env: process.env.NODE_ENV || 'development',
   publicDir: path.join(__dirname, '..', '..', 'public'),
-  appName: process.env.APP_NAME || 'Servidor Web - Tarea Santamaria',
-  startTime: new Date()
-};
+  // Las pruebas apuntan DB_PATH a una base temporal para no tocar los datos reales
+  dbPath: process.env.DB_PATH || path.join(__dirname, '..', 'data', 'civiccore.db'),
+  appName: process.env.APP_NAME || 'Servidor Web - Tarea Santamaria'};

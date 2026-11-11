@@ -1,7 +1,6 @@
 const { DatabaseSync } = require('node:sqlite');
-const path = require('path');
 
-const DB_PATH = path.join(__dirname, '..', 'data', 'civiccore.db');
+const DB_PATH = require('../config').dbPath;
 const db = new DatabaseSync(DB_PATH);
 
 console.log('\n' + '='.repeat(70));
