@@ -3,6 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const { db } = require('./connection');
 const { INSERT_INCIDENT_SQL } = require('./incidents');
+const { hashPassword, migratePlaintextPasswords } = require('./users');
 const { ROLE_PRIORITY } = require('../domain');
 
 const SEED_JSON = path.join(__dirname, '..', 'data', 'incidents.json');
@@ -19,13 +20,15 @@ function seedUsers() {
 
     const now = new Date().toISOString();
     // 1. Nivel Vecino
-    insertUser.run('Carmen Soto', 'vecino@correo.cl', 'vecino123', 'vecino', '14.283.910-4', 'Junta de Vecinos Barrio Norte', now);
+    insertUser.run('Carmen Soto', 'vecino@correo.cl', hashPassword('vecino123'), 'vecino', '14.283.910-4', 'Junta de Vecinos Barrio Norte', now);
     // 2. Nivel Trabajador del Estado
-    insertUser.run('Lic. Elena Morales', 'funcionario@municipio.gov', 'trabajador123', 'trabajador', '15.849.204-K', 'Central de Mando y Despacho', now);
+    insertUser.run('Lic. Elena Morales', 'funcionario@municipio.gov', hashPassword('trabajador123'), 'trabajador', '15.849.204-K', 'Central de Mando y Despacho', now);
     // 3. Nivel Super Administrador
-    insertUser.run('Super Admin Root', 'admin@civiccore.gov', 'admin123', 'admin', '10.555.333-1', 'Gobernanza y TI Municipal', now);
+    insertUser.run('Super Admin Root', 'admin@civiccore.gov', hashPassword('admin123'), 'admin', '10.555.333-1', 'Gobernanza y TI Municipal', now);
 
-    console.log('[Base de Datos] ✓ 3 usuarios creados: vecino@correo.cl, funcionario@municipio.gov, admin@civiccore.gov');
+    console.log('[Base de Datos] ✓ 3 usuarios creados con hash scrypt: vecino@correo.cl, funcionario@municipio.gov, admin@civiccore.gov');
+  } else {
+    migratePlaintextPasswords();
   }
 }
 

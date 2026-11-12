@@ -291,3 +291,42 @@ test('diagnóstico y rutas inexistentes', async () => {
   assert.equal(res.status, 404);
   assert.equal((await res.json()).statusCode, 404);
 });
+
+test('seguridad: contraseñas encriptadas con hash scrypt y bloqueo de falsificación de sesión', async () => {
+  const { db } = require('../src/database/connection');
+  const { isPasswordHashed } = require('../src/database/users');
+
+  // 1. Ninguna contraseña en la tabla users debe estar en texto plano
+  const rows = db.prepare('SELECT email, password FROM users').all();
+  assert.ok(rows.length >= 3);
+  for (const r of rows) {
+    assert.ok(isPasswordHashed(r.password), `La contraseña de ${r.email} no está hasheada con scrypt`);
+    assert.ok(!r.password.includes('admin123') && !r.password.includes('vecino123'));
+  }
+
+  // 2. El login entrega un sessionToken firmado con HMAC-SHA256
+  const login = await call('POST', '/auth/login', { body: { email: ADMIN.email, password: 'admin123' } });
+  assert.equal(login.status, 200);
+  assert.ok(login.json.user.sessionToken && login.json.user.sessionToken.includes('.'));
+
+  // 3. Un token alterado es rechazado (403 en ruta de admin)
+  const tamperedRes = await fetch(base + '/admin/users', {
+    headers: {
+      'Content-Type': 'application/json',
+      'x-session-token': login.json.user.sessionToken + 'tampered',
+      'x-user-role': 'admin'
+    }
+  });
+  assert.equal(tamperedRes.status, 403);
+
+  // 4. Un vecino no puede escalar a admin falsificando la cabecera x-user-role
+  const spoofedRes = await fetch(base + '/admin/users', {
+    headers: {
+      'Content-Type': 'application/json',
+      'x-user-id': String(VECINO.id),
+      'x-user-email': VECINO.email,
+      'x-user-role': 'admin'
+    }
+  });
+  assert.equal(spoofedRes.status, 403);
+});

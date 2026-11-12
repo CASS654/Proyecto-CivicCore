@@ -3,7 +3,7 @@ const express = require('express');
 const usersDb = require('../database/users');
 const incidentsDb = require('../database/incidents');
 const systemDb = require('../database/system');
-const { getUserFromRequest, requireAdmin } = require('../middlewares/auth');
+const { signSessionToken, getUserFromRequest, requireAdmin } = require('../middlewares/auth');
 
 const router = express.Router();
 
@@ -181,7 +181,7 @@ router.patch('/admin/users/:id', (req, res) => {
     res.json({
       status: 'success',
       message: `Datos de ${updated.name} actualizados con éxito`,
-      data: updated
+      data: { ...updated, sessionToken: signSessionToken(updated) }
     });
   } catch (err) {
     return res.status(400).json({

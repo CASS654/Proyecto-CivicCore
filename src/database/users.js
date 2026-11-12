@@ -1,7 +1,56 @@
 // Consultas de usuarios, autenticación y registro.
+const crypto = require('node:crypto');
 const { db } = require('./connection');
 const { addSystemAuditLog } = require('./system');
 const { nameFromEmail } = require('../domain');
+
+const HASH_PREFIX = 'scrypt$';
+const KEY_LEN = 64;
+
+function isPasswordHashed(stored) {
+  return typeof stored === 'string' && stored.startsWith(HASH_PREFIX);
+}
+
+function hashPassword(plain) {
+  const raw = String(plain ?? '');
+  if (isPasswordHashed(raw)) return raw;
+  const salt = crypto.randomBytes(16).toString('hex');
+  const derived = crypto.scryptSync(raw, salt, KEY_LEN).toString('hex');
+  return `${HASH_PREFIX}${salt}$${derived}`;
+}
+
+function verifyPassword(plain, stored) {
+  if (!plain || !stored) return false;
+  const candidate = String(plain);
+  if (isPasswordHashed(stored)) {
+    const parts = stored.split('$');
+    if (parts.length !== 3) return false;
+    const [, salt, hashHex] = parts;
+    try {
+      const expected = Buffer.from(hashHex, 'hex');
+      const actual = crypto.scryptSync(candidate, salt, expected.length);
+      return expected.length === actual.length && crypto.timingSafeEqual(expected, actual);
+    } catch {
+      return false;
+    }
+  }
+  // Compatibilidad con contraseñas en texto plano previas a la migración
+  return stored === candidate;
+}
+
+function migratePlaintextPasswords() {
+  try {
+    const rows = db.prepare('SELECT id, password FROM users').all();
+    const updateStmt = db.prepare('UPDATE users SET password = ? WHERE id = ?');
+    for (const row of rows) {
+      if (row.password && !isPasswordHashed(row.password)) {
+        updateStmt.run(hashPassword(row.password), row.id);
+      }
+    }
+  } catch (err) {
+    console.error('[Base de Datos] Error al migrar contraseñas a hash scrypt:', err.message);
+  }
+}
 
 function authenticateUser(identifier, password) {
   if (!identifier || !password) return null;
@@ -11,8 +60,12 @@ function authenticateUser(identifier, password) {
     WHERE (LOWER(email) = ? OR LOWER(rut_dni) = ?) AND status = 'active'
   `).get(clean, clean);
   if (!user) return null;
-  // shortcut: contraseñas guardadas y comparadas en texto plano; migrar a crypto.scrypt con sal antes de usar datos reales
-  if (user.password !== password) return null;
+  if (!verifyPassword(password, user.password)) return null;
+
+  // Si la contraseña aún estaba en texto plano, actualizarla a hash automáticamente
+  if (!isPasswordHashed(user.password)) {
+    db.prepare('UPDATE users SET password = ? WHERE id = ?').run(hashPassword(password), user.id);
+  }
 
   return {
     id: user.id,
@@ -49,7 +102,7 @@ function createUser(userData, adminActor) {
   stmt.run(
     userData.name,
     userData.email.trim().toLowerCase(),
-    userData.password || 'civic123',
+    hashPassword(userData.password || 'civic123'),
     userData.role || 'vecino',
     userData.rutDni || '',
     userData.department || 'Comuna',
@@ -92,12 +145,12 @@ function updateUserPassword(idOrEmail, newPassword, actor, currentPassword = nul
   }
 
   if (currentPassword !== null && currentPassword !== undefined) {
-    if (user.password !== currentPassword.toString().trim()) {
+    if (!verifyPassword(currentPassword.toString().trim(), user.password)) {
       throw new Error('La contraseña actual ingresada es incorrecta.');
     }
   }
 
-  db.prepare('UPDATE users SET password = ? WHERE id = ?').run(newPassword.toString().trim(), user.id);
+  db.prepare('UPDATE users SET password = ? WHERE id = ?').run(hashPassword(newPassword.toString().trim()), user.id);
 
   addSystemAuditLog(
     'CAMBIO_PASSWORD',
@@ -174,7 +227,7 @@ function registerVecino({ name, email, password, rutDni, department }) {
   const result = stmt.run(
     name.trim(),
     cleanEmail,
-    password.trim(),
+    hashPassword(password.trim()),
     rutDni ? rutDni.trim() : '',
     department ? department.trim() : 'Comunidad Vecinal',
     now
@@ -231,7 +284,7 @@ function authenticateGoogleUser({ email, name, avatar }) {
     VALUES (?, ?, ?, 'vecino', 'Google Auth', 'Comunidad Vecinal', 'active', ?)
   `);
 
-  const randomPwd = 'google_' + Math.random().toString(36).substring(2, 10);
+  const randomPwd = hashPassword('google_' + crypto.randomBytes(12).toString('hex'));
   const result = stmt.run(cleanName, cleanEmail, randomPwd, now);
   const newId = result.lastInsertRowid;
 
@@ -278,6 +331,10 @@ function updateUserRole(id, newRole, adminActor) {
 }
 
 module.exports = {
+  hashPassword,
+  verifyPassword,
+  isPasswordHashed,
+  migratePlaintextPasswords,
   authenticateUser,
   getAllUsers,
   createUser,

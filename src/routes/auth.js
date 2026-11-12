@@ -3,7 +3,7 @@ const express = require('express');
 const usersDb = require('../database/users');
 const systemDb = require('../database/system');
 const { decodeGoogleJwt, nameFromEmail } = require('../domain');
-const { getUserFromRequest, requireAdmin, getClientIp } = require('../middlewares/auth');
+const { signSessionToken, getUserFromRequest, requireAdmin, getClientIp } = require('../middlewares/auth');
 
 const router = express.Router();
 
@@ -36,7 +36,7 @@ router.post('/auth/login', (req, res) => {
     return res.json({
       status: 'success',
       message: `Sesión iniciada como ${selected.name} (${selected.role})`,
-      user: selected
+      user: { ...selected, sessionToken: signSessionToken(selected) }
     });
   }
 
@@ -62,7 +62,7 @@ router.post('/auth/login', (req, res) => {
   res.json({
     status: 'success',
     message: `Bienvenido(a), ${authenticated.name}`,
-    user: authenticated
+    user: { ...authenticated, sessionToken: signSessionToken(authenticated) }
   });
 });
 
@@ -96,7 +96,7 @@ router.post('/auth/register', (req, res) => {
     res.status(201).json({
       status: 'success',
       message: `¡Registro exitoso! Bienvenido(a) al Portal Vecinal, ${user.name}`,
-      user: user
+      user: { ...user, sessionToken: signSessionToken(user) }
     });
   } catch (err) {
     return res.status(400).json({
@@ -179,7 +179,7 @@ router.post('/auth/google', (req, res) => {
     res.json({
       status: 'success',
       message: `Sesión iniciada con Google como ${user.name}`,
-      user: user
+      user: { ...user, sessionToken: signSessionToken(user) }
     });
   } catch (err) {
     return res.status(400).json({
@@ -254,7 +254,7 @@ router.patch('/auth/profile', (req, res) => {
     res.json({
       status: 'success',
       message: 'Datos de perfil actualizados con éxito',
-      data: updated
+      data: { ...updated, sessionToken: signSessionToken(updated) }
     });
   } catch (err) {
     return res.status(400).json({

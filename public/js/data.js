@@ -6,10 +6,11 @@ import { applyMunicipalitySettings, showToast } from './ui.js';
 
 const onLoaded = { incidents() {}, stats() {}, users() {}, audit() {} };
 
-// Identidad de la sesión que el backend usa para autorizar (ver src/middlewares/auth.js)
+// Identidad de la sesión que el backend usa para autorizar mediante token firmado (ver src/middlewares/auth.js)
 function userHeaders() {
   return {
     'Content-Type': 'application/json',
+    'x-session-token': state.currentUser.sessionToken || '',
     'x-user-id': String(state.currentUser.id || ''),
     'x-user-email': state.currentUser.email || '',
     'x-user-role': state.currentUser.role,

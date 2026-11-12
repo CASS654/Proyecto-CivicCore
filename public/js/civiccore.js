@@ -124,6 +124,10 @@ window.civicApp = {
 // Inicio de la Aplicación
 // ==========================================
 function init() {
+  // Limpiar cualquier parámetro sensible (contraseñas, correos o roles) que haya quedado expuesto en la URL
+  if (window.location.search) {
+    window.history.replaceState({}, document.title, window.location.pathname + window.location.hash);
+  }
   applySystemPrefs();
   [initAuth, initNav, initGlobalEvents, initAjustes, initVecino, initNuevo, initIncidencias, initMapa, initAdmin, initInicio].forEach(fn => fn());
   renderNavForRole(state.currentUser.role);

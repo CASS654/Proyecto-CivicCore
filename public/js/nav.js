@@ -6,8 +6,6 @@ import { showToast } from './ui.js';
 
 const dom = {
   views: document.querySelectorAll('.view-panel'),
-  headerTitle: document.getElementById('header-view-title'),
-  headerContextTag: document.getElementById('header-context-tag'),
   mobileBottomNav: document.getElementById('mobile-bottom-nav'),
   currentUserBadge: document.getElementById('current-user-badge'),
   btnAuthText: document.getElementById('btn-auth-text'),
@@ -23,17 +21,40 @@ const dom = {
   sidebarDesktop: document.getElementById('sidebar-desktop'),
   btnSidebarCollapse: document.getElementById('btn-sidebar-collapse'),
   btnSidebarExpand: document.getElementById('btn-sidebar-expand'),
+  sidebarToggleIcon: document.getElementById('sidebar-toggle-icon'),
   headerLogo: document.getElementById('header-logo'),
+  headerTitleBlock: document.getElementById('header-title-block'),
+  headerTitle: document.getElementById('header-view-title'),
+  headerContextTag: document.getElementById('header-context-tag'),
+  headerViewIcon: document.getElementById('header-view-icon'),
   headerHomeNav: document.getElementById('header-home-nav'),
-  headerQuickNav: document.getElementById('header-quick-nav'),
-  headerTitleBlock: document.getElementById('header-title-block')
+  headerQuickNav: document.getElementById('header-quick-nav')
+};
+
+// Metadatos contextuales de cada vista para el bloque de título en el header
+const VIEW_META = {
+  'view-inicio': { title: 'CivicCore', context: 'Portal Ciudadano', icon: 'account_balance' },
+  'view-nuevo': { title: 'Nuevo Reporte Ciudadano', context: 'Atención Vecinal', icon: 'add_alert' },
+  'view-vecino': { title: 'Portal de Seguimiento Vecinal', context: 'Espacio Ciudadano', icon: 'cottage' },
+  'view-incidencias': { title: 'Bandeja de Reportes', context: 'Operaciones de Campo', icon: 'assignment' },
+  'view-mapa': { title: 'Mapa Territorial de Incidencias', context: 'Georreferenciación', icon: 'map' },
+  'view-panel': { title: 'Panel de Gestión (KPIs)', context: 'Inteligencia Municipal', icon: 'dashboard' },
+  'view-admin-hub': { title: 'Consola Maestra', context: 'Gobernanza TI', icon: 'shield_person' },
+  'view-admin-users': { title: 'Padrón de Usuarios y Claves', context: 'Seguridad & Accesos', icon: 'vpn_key' },
+  'view-admin-moderation': { title: 'Edición Canónica de Folios', context: 'Moderación Oficial', icon: 'edit_note' },
+  'view-admin-audit': { title: 'Bitácora de Auditoría Legal', context: 'Trazabilidad SHA-256', icon: 'history_edu' }
 };
 
 // Cada vista registra aquí lo que hace al entrar (ver civiccore.js)
 const onEnter = {};
 
-const SIDEBAR_ITEM_ACTIVE = 'sidebar-nav-item active w-full flex items-center justify-between px-3.5 py-3 rounded-xl font-bold text-xs transition-all text-primary bg-surface-container-high shadow-sm';
-const SIDEBAR_ITEM = 'sidebar-nav-item w-full flex items-center justify-between px-3.5 py-3 rounded-xl font-medium text-xs text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-all';
+// Filas del Rail estilo Gemini / Antigravity: 40px exactos de alto (h-10) y bordes redondeados limpios sin sombras desbordadas
+const SIDEBAR_ROW = 'cc-focus w-full h-10 flex items-center rounded-xl text-[13px]';
+const SIDEBAR_ITEM = `sidebar-nav-item ${SIDEBAR_ROW} font-medium text-on-surface-variant hover:bg-surface-container-high/70 hover:text-on-surface`;
+const SIDEBAR_ITEM_ACTIVE = `sidebar-nav-item active ${SIDEBAR_ROW} font-bold text-primary`;
+// Acciones sin vista propia (Rastrear Folio, Acceder)
+const SIDEBAR_ACTION = `sidebar-nav-action ${SIDEBAR_ROW} font-medium text-on-surface-variant hover:bg-surface-container-high/70 hover:text-on-surface`;
+const SIDEBAR_BADGE = 'shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold leading-none border';
 
 // Botones del header en la portada (Inicio) por rol: [vista, icono, texto, acción de window.civicApp si no es cambiar de vista]
 const HEADER_NAV = {
@@ -61,19 +82,6 @@ const HEADER_NAV = {
   ]
 };
 
-const VIEW_TITLES = {
-  'view-inicio': { title: 'Portal Cívico Municipal', context: 'Portal Ciudadano' },
-  'view-nuevo': { title: 'Generar Reporte Ciudadano', context: 'Ingreso Comunal' },
-  'view-vecino': { title: 'Portal Vecinal Ciudadano', context: 'Comunidad Conectada' },
-  'view-incidencias': { title: 'Bandeja de Incidencias', context: 'Despacho y Triaje' },
-  'view-mapa': { title: 'Mapa Comunal de Incidencias', context: 'Georreferenciación' },
-  'view-panel': { title: 'Panel de Gestión Municipal', context: 'KPIs y Métricas' },
-  'view-admin-hub': { title: 'Admin Hub • Consola Maestra', context: 'Gobernanza TI' },
-  'view-admin-users': { title: 'Padrón y Emisión de Claves', context: 'Seguridad' },
-  'view-admin-moderation': { title: 'Gobernanza & Edición Canónica', context: 'Moderación' },
-  'view-admin-audit': { title: 'Auditoría & Trazabilidad (Ley 19.628)', context: 'Fe Pública' }
-};
-
 // ==========================================
 // Navegación & Control de Vistas por Rol
 // ==========================================
@@ -87,13 +95,13 @@ function switchView(targetViewId, options = {}) {
   }
 
   state.currentView = targetViewId;
+  updateHeaderMeta(targetViewId);
   updateLayout();
 
   // Ocultar todas las vistas y mostrar la activa
   dom.views.forEach(v => v.classList.toggle('hidden', v.id !== targetViewId));
 
   updateActiveNavIndicators(targetViewId);
-  updateHeaderTitles(targetViewId);
 
   if (onEnter[targetViewId]) onEnter[targetViewId]();
 
@@ -104,43 +112,144 @@ function switchView(targetViewId, options = {}) {
   }
 }
 
-function updateHeaderTitles(viewId) {
-  const info = VIEW_TITLES[viewId] || { title: 'CivicCore', context: 'Municipalidad' };
-  if (dom.headerTitle) dom.headerTitle.textContent = info.title;
-  if (dom.headerContextTag) dom.headerContextTag.textContent = info.context;
+function updateHeaderMeta(viewId) {
+  const meta = VIEW_META[viewId] || VIEW_META['view-inicio'];
+  if (dom.headerTitle) dom.headerTitle.textContent = meta.title;
+  if (dom.headerContextTag) dom.headerContextTag.textContent = meta.context;
+  if (dom.headerViewIcon) dom.headerViewIcon.textContent = meta.icon;
+  if (dom.headerTitleBlock) {
+    dom.headerTitleBlock.classList.remove('cc-title-swap');
+    void dom.headerTitleBlock.offsetWidth;
+    dom.headerTitleBlock.classList.add('cc-title-swap');
+  }
 }
 
-// Inicio es la portada: sin barra lateral y con la navegación en el header.
-// En las demás vistas, en escritorio, la barra lateral salvo que el usuario la haya ocultado.
-function updateLayout() {
+// En la portada (Inicio) la barra lateral no se muestra; en las vistas internas
+// funciona como el Navigation Rail de Gemini / Antigravity (268px expandido <-> 68px contraído).
+function updateLayout(animateNow = false) {
   const isHome = state.currentView === 'view-inicio';
   const collapsed = !!systemPrefs.sidebarCollapsed;
-  const sidebarShown = !isHome && !collapsed;
+  const sidebarExpanded = !collapsed;
 
-  if (dom.sidebarDesktop) dom.sidebarDesktop.classList.toggle('lg:flex', sidebarShown);
+  document.body.dataset.layout = isHome ? 'home' : 'app';
+
+  if (dom.sidebarDesktop) {
+    const prevState = dom.sidebarDesktop.dataset.state;
+    const nextState = isHome ? 'hidden' : (sidebarExpanded ? 'open' : 'closed');
+    dom.sidebarDesktop.dataset.state = nextState;
+    dom.sidebarDesktop.inert = isHome;
+
+    if (animateNow && !isHome && prevState !== nextState && typeof dom.sidebarDesktop.animate === 'function') {
+      runSidebarChoreography(sidebarExpanded);
+    }
+  }
+
+  if (dom.sidebarToggleIcon) {
+    dom.sidebarToggleIcon.textContent = sidebarExpanded ? 'left_panel_close' : 'left_panel_open';
+  }
+
+  if (dom.btnSidebarCollapse) {
+    dom.btnSidebarCollapse.setAttribute('aria-expanded', String(sidebarExpanded));
+    dom.btnSidebarCollapse.title = sidebarExpanded ? 'Contraer menú' : 'Expandir menú';
+  }
   if (dom.btnSidebarExpand) {
-    dom.btnSidebarExpand.classList.toggle('lg:flex', !isHome && collapsed);
-    dom.btnSidebarExpand.setAttribute('aria-expanded', String(sidebarShown));
+    dom.btnSidebarExpand.setAttribute('aria-expanded', String(sidebarExpanded));
   }
-  if (dom.btnSidebarCollapse) dom.btnSidebarCollapse.setAttribute('aria-expanded', String(sidebarShown));
-  // El logo del header sobra cuando la barra lateral (que ya lo muestra) está a la vista
-  if (dom.headerLogo) dom.headerLogo.classList.toggle('lg:hidden', sidebarShown);
-  if (dom.headerHomeNav) {
-    dom.headerHomeNav.classList.toggle('hidden', !isHome);
-    dom.headerHomeNav.classList.toggle('flex', isHome);
+}
+
+// Coreografía Web Animations API (estilo Google Gemini / Antigravity)
+function runSidebarChoreography(expanding) {
+  const sidebar = dom.sidebarDesktop;
+  if (!sidebar) return;
+
+  const easeSpring = 'cubic-bezier(0.22, 1, 0.36, 1)';
+  const duration = 420;
+
+  // 1. Animar el ancho del contenedor principal del rail (68px <-> 268px)
+  sidebar.animate(
+    [
+      { width: expanding ? '68px' : '268px' },
+      { width: expanding ? '268px' : '68px' }
+    ],
+    { duration, easing: easeSpring }
+  );
+
+  // 2. Animar el bloque de marca superior (se despliega a la izquierda del botón cuando está abierto)
+  const brand = sidebar.querySelector('.cc-sidebar-brand');
+  if (brand) {
+    brand.getAnimations().forEach(a => a.cancel());
+    brand.animate(
+      [
+        { maxWidth: expanding ? '0px' : '190px', opacity: expanding ? 0 : 1, transform: expanding ? 'translateX(-10px)' : 'translateX(0px)' },
+        { maxWidth: expanding ? '190px' : '0px', opacity: expanding ? 1 : 0, transform: expanding ? 'translateX(0px)' : 'translateX(-10px)' }
+      ],
+      { duration, easing: easeSpring }
+    );
   }
-  if (dom.headerTitleBlock) {
-    // Portada: título desde xl, como antes; vistas internas: desde lg, con separador solo si hay logo a la izquierda
-    dom.headerTitleBlock.classList.toggle('xl:block', isHome);
-    dom.headerTitleBlock.classList.toggle('lg:block', !isHome);
-    ['border-l', 'border-outline-variant/30', 'pl-3'].forEach(c => dom.headerTitleBlock.classList.toggle(c, !sidebarShown));
+
+  // 3. Giro elástico del icono del botón superior (a la derecha al expandir, centrado al contraer)
+  if (dom.sidebarToggleIcon) {
+    dom.sidebarToggleIcon.animate(
+      [
+        { transform: 'scale(0.75) rotate(-90deg)', opacity: 0.4 },
+        { transform: 'scale(1) rotate(0deg)', opacity: 1 }
+      ],
+      { duration: 340, easing: 'cubic-bezier(0.34, 1.56, 0.64, 1)' }
+    );
   }
+
+  // 4. Transformar las píldoras (CTA, filas de navegación y chip de usuario) entre 40px exactos y 240px
+  const pills = sidebar.querySelectorAll('.cc-sidebar-cta, .sidebar-nav-item, .sidebar-nav-action, .cc-sidebar-user-card');
+  pills.forEach(pill => {
+    pill.getAnimations().forEach(a => a.cancel());
+    pill.animate(
+      [
+        { maxWidth: expanding ? '40px' : '240px' },
+        { maxWidth: expanding ? '240px' : '40px' }
+      ],
+      { duration, easing: easeSpring }
+    );
+  });
+
+  // 4. Revelar u ocultar etiquetas (.cc-rail-reveal) en cascada escalonada
+  const reveals = sidebar.querySelectorAll('.cc-rail-reveal');
+  reveals.forEach((el, idx) => {
+    el.getAnimations().forEach(a => a.cancel());
+    if (expanding) {
+      el.animate(
+        [
+          { opacity: 0, transform: 'translateX(-12px)' },
+          { opacity: 1, transform: 'translateX(0px)' }
+        ],
+        {
+          duration: 320,
+          delay: Math.min(idx * 22, 160),
+          easing: easeSpring
+        }
+      );
+    } else {
+      el.animate(
+        [
+          { opacity: 1, transform: 'translateX(0px)' },
+          { opacity: 0, transform: 'translateX(-10px)' }
+        ],
+        {
+          duration: 180,
+          easing: 'ease-out'
+        }
+      );
+    }
+  });
 }
 
 function setSidebarCollapsed(collapsed) {
   systemPrefs.sidebarCollapsed = collapsed;
   saveSystemPrefsToStorage();
-  updateLayout();
+  updateLayout(true);
+}
+
+function toggleSidebar() {
+  setSidebarCollapsed(!systemPrefs.sidebarCollapsed);
 }
 
 function updateActiveNavIndicators(viewId) {
@@ -173,116 +282,66 @@ function headerNavButton([target, icon, label, action]) {
     </button>`;
 }
 
+function sidebarGroup(label, extraClass = '') {
+  return `<div class="cc-sidebar-group px-2.5 pt-3 pb-1 text-[10px] font-extrabold uppercase tracking-[0.11em] text-outline flex items-center gap-2 ${extraClass}"><span class="cc-rail-reveal">${label}</span></div>`;
+}
+
+function sidebarRowContent(icon, label, badge = '') {
+  return `
+      <span class="cc-nav-icon w-10 h-10 rounded-xl flex items-center justify-center shrink-0">
+        <span class="material-symbols-outlined text-[20px]" aria-hidden="true">${icon}</span>
+      </span>
+      <span class="cc-rail-reveal flex-1 flex items-center justify-between gap-2 pl-2 pr-3 min-w-0">
+        <span class="truncate">${label}</span>${badge}
+      </span>`;
+}
+
+function sidebarItem(target, icon, label, badge = '') {
+  return `
+    <button type="button" data-target="${target}" data-tooltip="${label}" class="${SIDEBAR_ITEM}">${sidebarRowContent(icon, label, badge)}
+    </button>`;
+}
+
+function sidebarAction(action, icon, label, extraClass = '') {
+  return `
+    <button type="button" data-tooltip="${label}" onclick="window.civicApp.${action}" class="${SIDEBAR_ACTION} ${extraClass}">${sidebarRowContent(icon, label)}
+    </button>`;
+}
+
 // Menú de la barra lateral (escritorio) según el rol
 function sidebarMenuHtml(role) {
   if (role === 'vecino') {
-    return `
-      <div class="px-3 py-2 text-[10px] font-bold text-outline uppercase tracking-wider">Menú Vecinal</div>
-      <button data-target="view-vecino" class="${SIDEBAR_ITEM}">
-        <div class="flex items-center gap-2.5">
-          <span class="material-symbols-outlined text-[20px]">cottage</span>
-          <span>Portal Vecinal</span>
-        </div>
-        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-      </button>
-      <button data-target="view-nuevo" class="${SIDEBAR_ITEM}">
-        <div class="flex items-center gap-2.5">
-          <span class="material-symbols-outlined text-[20px]">add_alert</span>
-          <span>Reportar Incidencia</span>
-        </div>
-        <span class="px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold">Alta Prioridad</span>
-      </button>
-    `;
+    return sidebarGroup('Menú Vecinal') +
+      sidebarItem('view-inicio', 'home', 'Inicio Municipal') +
+      sidebarItem('view-vecino', 'cottage', 'Portal Vecinal') +
+      sidebarItem('view-nuevo', 'add_alert', 'Reportar Incidencia',
+        `<span class="${SIDEBAR_BADGE} bg-emerald-500/10 text-emerald-600 border-emerald-500/20">Directo</span>`);
   }
   if (role === 'trabajador') {
-    return `
-      <div class="px-3 py-2 text-[10px] font-bold text-outline uppercase tracking-wider">Operaciones Municipales</div>
-      <button data-target="view-incidencias" class="${SIDEBAR_ITEM}">
-        <div class="flex items-center gap-2.5">
-          <span class="material-symbols-outlined text-[20px]">assignment</span>
-          <span>Bandeja de Reportes</span>
-        </div>
-        <span id="badge-total-incidencias" class="px-2 py-0.5 rounded-full bg-primary text-on-primary text-[10px] font-bold">${state.incidents.length}</span>
-      </button>
-      <button data-target="view-mapa" class="${SIDEBAR_ITEM}">
-        <div class="flex items-center gap-2.5">
-          <span class="material-symbols-outlined text-[20px]">map</span>
-          <span>Mapa Comunal</span>
-        </div>
-        <span class="w-2 h-2 rounded-full bg-tertiary-container animate-ping"></span>
-      </button>
-      <button data-target="view-panel" class="${SIDEBAR_ITEM}">
-        <div class="flex items-center gap-2.5">
-          <span class="material-symbols-outlined text-[20px]">dashboard</span>
-          <span>Panel de Gestión (KPIs)</span>
-        </div>
-      </button>
-    `;
+    return sidebarGroup('Operaciones') +
+      sidebarItem('view-inicio', 'home', 'Inicio Municipal') +
+      sidebarItem('view-incidencias', 'assignment', 'Bandeja de Reportes',
+        `<span id="badge-total-incidencias" class="${SIDEBAR_BADGE} tabular-nums bg-primary/10 text-primary border-primary/20">${state.incidents.length}</span>`) +
+      sidebarItem('view-mapa', 'map', 'Mapa Comunal') +
+      sidebarItem('view-panel', 'dashboard', 'Panel de Gestión (KPIs)');
   }
   if (role === 'admin') {
-    return `
-      <div class="px-3 py-2 text-[10px] font-bold text-outline uppercase tracking-wider">Super Admin Hub</div>
-      <button data-target="view-admin-hub" class="${SIDEBAR_ITEM}">
-        <div class="flex items-center gap-2.5">
-          <span class="material-symbols-outlined text-[20px]">shield_person</span>
-          <span>Consola Maestra</span>
-        </div>
-        <span class="px-1.5 py-0.5 rounded-full bg-error text-on-error text-[9px] font-bold">ROOT</span>
-      </button>
-      <button data-target="view-admin-users" class="${SIDEBAR_ITEM}">
-        <div class="flex items-center gap-2.5">
-          <span class="material-symbols-outlined text-[20px]">vpn_key</span>
-          <span>Padrón & Claves</span>
-        </div>
-      </button>
-      <button data-target="view-admin-moderation" class="${SIDEBAR_ITEM}">
-        <div class="flex items-center gap-2.5">
-          <span class="material-symbols-outlined text-[20px]">edit_note</span>
-          <span>Edición Canónica</span>
-        </div>
-      </button>
-      <button data-target="view-admin-audit" class="${SIDEBAR_ITEM}">
-        <div class="flex items-center gap-2.5">
-          <span class="material-symbols-outlined text-[20px]">history_edu</span>
-          <span>Auditoría Legal</span>
-        </div>
-        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-      </button>
-      <div class="pt-3 border-t border-outline-variant/20">
-        <div class="px-3 py-1 text-[10px] font-bold text-outline uppercase tracking-wider">Supervisión Comunal</div>
-        <button data-target="view-incidencias" class="${SIDEBAR_ITEM}">
-          <div class="flex items-center gap-2.5">
-            <span class="material-symbols-outlined text-[20px]">assignment</span>
-            <span>Bandeja General</span>
-          </div>
-        </button>
-      </div>
-    `;
+    return sidebarGroup('Gobernanza TI') +
+      sidebarItem('view-inicio', 'home', 'Inicio Municipal') +
+      sidebarItem('view-admin-hub', 'shield_person', 'Consola Maestra',
+        `<span class="${SIDEBAR_BADGE} tracking-wide bg-error/10 text-error border-error/20">ROOT</span>`) +
+      sidebarItem('view-admin-users', 'vpn_key', 'Padrón & Claves') +
+      sidebarItem('view-admin-moderation', 'edit_note', 'Edición Canónica') +
+      sidebarItem('view-admin-audit', 'history_edu', 'Auditoría Legal') +
+      sidebarGroup('Supervisión', 'mt-2 pt-3 border-t border-outline-variant/25') +
+      sidebarItem('view-incidencias', 'assignment', 'Bandeja General');
   }
-  // Invitado: incluye "Rastrear Folio", que antes estaba en los botones del header
-  return `
-    <div class="px-3 py-2 text-[10px] font-bold text-outline uppercase tracking-wider">Menú Ciudadano</div>
-    <button data-target="view-inicio" class="${SIDEBAR_ITEM}">
-      <div class="flex items-center gap-2.5">
-        <span class="material-symbols-outlined text-[20px]">home</span>
-        <span>Inicio Municipal</span>
-      </div>
-    </button>
-    <button data-target="view-nuevo" class="${SIDEBAR_ITEM}">
-      <div class="flex items-center gap-2.5">
-        <span class="material-symbols-outlined text-[20px]">add_alert</span>
-        <span>Generar Reporte</span>
-      </div>
-    </button>
-    <button onclick="window.civicApp.scrollToHomeTracker()" class="w-full flex items-center gap-2.5 px-3.5 py-3 rounded-xl font-medium text-xs text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-all">
-      <span class="material-symbols-outlined text-[20px]">search</span>
-      <span>Rastrear Folio</span>
-    </button>
-    <button onclick="window.civicApp.openAuthModal()" class="w-full flex items-center gap-2.5 px-3.5 py-3 rounded-xl font-medium text-xs text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-all mt-2">
-      <span class="material-symbols-outlined text-[20px]">vpn_key</span>
-      <span>Acceder con Cuenta</span>
-    </button>
-  `;
+  // Invitado
+  return sidebarGroup('Explorar') +
+    sidebarItem('view-inicio', 'home', 'Inicio Municipal') +
+    sidebarItem('view-nuevo', 'add_alert', 'Generar Reporte') +
+    sidebarAction('scrollToHomeTracker()', 'search', 'Rastrear Folio') +
+    sidebarAction('openAuthModal()', 'login', 'Acceder con Cuenta', 'mt-1 !text-primary font-semibold');
 }
 
 // ==========================================
@@ -293,10 +352,6 @@ function renderNavForRole(role) {
   const isGuest = role === 'invitado';
 
   if (dom.mobileBottomNav) dom.mobileBottomNav.classList.remove('hidden');
-  if (dom.currentUserBadge) {
-    dom.currentUserBadge.classList.toggle('hidden', isGuest);
-    dom.currentUserBadge.classList.toggle('flex', !isGuest);
-  }
   if (dom.btnAuthText) dom.btnAuthText.textContent = isGuest ? 'Iniciar Sesión' : 'Cerrar Sesión';
 
   // Botones del header (visibles solo en la portada, ver updateLayout)
@@ -307,8 +362,25 @@ function renderNavForRole(role) {
   // Barra lateral de escritorio
   if (dom.sidebarNavMenu) {
     dom.sidebarNavMenu.innerHTML = sidebarMenuHtml(role);
+    dom.sidebarNavMenu.querySelectorAll('.sidebar-nav-item, .sidebar-nav-action, .cc-sidebar-group').forEach((el, idx) => {
+      el.style.setProperty('--cc-item-index', idx);
+      el.classList.add('cc-sidebar-item-animate');
+    });
     dom.sidebarNavMenu.querySelectorAll('.sidebar-nav-item').forEach(item => {
-      item.addEventListener('click', () => switchView(item.getAttribute('data-target')));
+      item.addEventListener('click', () => {
+        const iconBox = item.querySelector('.cc-nav-icon');
+        if (iconBox && typeof iconBox.animate === 'function') {
+          iconBox.animate(
+            [
+              { transform: 'scale(0.82)' },
+              { transform: 'scale(1.16) rotate(-6deg)' },
+              { transform: 'scale(1) rotate(0deg)' }
+            ],
+            { duration: 340, easing: 'cubic-bezier(0.34, 1.56, 0.64, 1)' }
+          );
+        }
+        switchView(item.getAttribute('data-target'));
+      });
     });
   }
   if (dom.sidebarUserName) dom.sidebarUserName.textContent = state.currentUser.name;
@@ -425,8 +497,23 @@ function renderNavForRole(role) {
 }
 
 function init() {
-  if (dom.btnSidebarCollapse) dom.btnSidebarCollapse.addEventListener('click', () => setSidebarCollapsed(true));
+  if (dom.btnSidebarCollapse) dom.btnSidebarCollapse.addEventListener('click', toggleSidebar);
   if (dom.btnSidebarExpand) dom.btnSidebarExpand.addEventListener('click', () => setSidebarCollapsed(false));
+
+  // Al hacer clic en cualquier botón o elemento de la barra lateral cuando está contraída, se abre automáticamente con animación
+  if (dom.sidebarDesktop) {
+    dom.sidebarDesktop.addEventListener('click', (e) => {
+      if (!systemPrefs.sidebarCollapsed) return;
+      if (e.target.closest('#btn-sidebar-collapse')) return;
+      if (e.target.closest('button, #sidebar-user-chip')) {
+        setSidebarCollapsed(false);
+      }
+    });
+  }
+
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    if (dom.sidebarDesktop) dom.sidebarDesktop.classList.add('is-ready');
+  }));
 }
 
 export { onEnter, switchView, renderNavForRole, updateLayout, init };

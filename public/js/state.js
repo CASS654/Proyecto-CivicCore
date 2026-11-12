@@ -1,15 +1,35 @@
-// Estado en memoria y su persistencia en localStorage (sesión y preferencias).
+// Estado en memoria y su persistencia en localStorage (sesión firmada y preferencias).
 
 import { GUEST_USER, DEFAULT_SYSTEM_PREFS } from './config.js';
 
-// shortcut: la sesión (rol incluido) vive en localStorage y se envía tal cual al servidor; editarla cambia el rol.
-// Se arregla junto con la autorización del backend (ver src/middlewares/auth.js).
+function decodeTokenPayload(token) {
+  if (!token || typeof token !== 'string' || !token.includes('.')) return null;
+  try {
+    const [payloadB64] = token.split('.');
+    const base64 = payloadB64.replace(/-/g, '+').replace(/_/g, '/');
+    const padded = base64 + '='.repeat((4 - (base64.length % 4)) % 4);
+    return JSON.parse(decodeURIComponent(escape(atob(padded))));
+  } catch {
+    return null;
+  }
+}
+
 function loadSessionUser() {
   try {
     const raw = localStorage.getItem('civiccore_session_user');
     if (!raw) return { ...GUEST_USER };
     const parsed = JSON.parse(raw);
     if (parsed && parsed.role && parsed.role !== 'invitado') {
+      const tokenPayload = decodeTokenPayload(parsed.sessionToken);
+      // Si no hay token firmado o los datos de localStorage fueron alterados respecto al token, invalidar sesión
+      if (
+        !tokenPayload ||
+        tokenPayload.role !== parsed.role ||
+        String(tokenPayload.email || '').toLowerCase() !== String(parsed.email || '').toLowerCase()
+      ) {
+        localStorage.removeItem('civiccore_session_user');
+        return { ...GUEST_USER };
+      }
       return { ...GUEST_USER, ...parsed };
     }
   } catch (e) {}

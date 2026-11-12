@@ -322,11 +322,14 @@ async function handleEditUserSubmit(e) {
     showToast(`Datos de ${json.data.name} actualizados con éxito`, 'success');
     closeEditUserModal();
 
-    // Si el usuario editado es la cuenta activa, actualizar estado
+    // Si el usuario editado es la cuenta activa, actualizar estado y token firmado
     if (state.currentUser.email === email || state.currentUser.id === Number(id)) {
       state.currentUser.name = json.data.name;
       state.currentUser.email = json.data.email;
       state.currentUser.role = json.data.role;
+      if (json.data.sessionToken) {
+        state.currentUser.sessionToken = json.data.sessionToken;
+      }
       saveSessionUser(state.currentUser);
       renderNavForRole(state.currentUser.role);
     }
